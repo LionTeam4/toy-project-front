@@ -1,18 +1,19 @@
-import Card from "./Card";
+// 기존 festivals 전용 → 범용 List로 수정
+// 사용법: <List items={배열} renderItem={(item) => <Card>...</Card>} />
+const List = ({ items, renderItem }) => {
+  if (!items || items.length === 0) {
+    return <p>목록이 없습니다.</p>
+  }
 
-const List = ({festivals}) => {
   return (
     <div>
-        {festivals.map((f, i) => (
-            <Card
-            key = {i}
-            title={f.title}
-            date={f.date}
-            location={f.location}
-            />
-        ))}
+      {items.map((item, index) => (
+        <div key={item.id ?? index}>
+          {renderItem(item)}
+        </div>
+      ))}
     </div>
-  );
-};
+  )
+}
 
-export default List;
+export default List
