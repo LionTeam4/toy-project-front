@@ -1,8 +1,6 @@
-import { useContext } from 'react'
-import { AuthContext } from '../contexts/AuthContext'
+import useAppStore from '../store/useAppStore'
 
 export default function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth must be used within AuthProvider')
-  return context
-} 
+  const { user, isLoading, login, logout, isLoggedIn } = useAppStore()
+  return { user, isLoading, login, logout, isLoggedIn }
+}
