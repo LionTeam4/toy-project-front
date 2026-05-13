@@ -1,29 +1,50 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Button from '../components/Button'
-import Card from '../components/Card'
-import List from '../components/List'
 import useAuth from '../hooks/useAuth'
+import ContentTabs from '../components/ContentTabs'
+import HomeEwha from '../assets/HomeEwha.svg'
+import HomeSkku from '../assets/HomeSkku.svg'
+import ewha_logo from '../assets/ewha_logo.svg'
 
-// 와이어프레임 3.1 홈
-// - 인사말 + "어느 축제를 기대하나요?" 문구
-// - 관심 축제 추천 카드 리스트
-// - 추천 후기 리스트
-// - 소통 섹션 바로가기
 
 const DUMMY_FESTIVALS = [
-  { id: 1, name: '이화여대 대동제', date: '2026-05-14', location: '서울' },
-  { id: 2, name: '연세대 아카라카', date: '2026-05-21', location: '서울' },
+  { id: 1, name: '이화여대 대동제', date: '2026-05-14', location: '서울', posterUrl: HomeEwha },
+  { id: 2, name: '연세대 아카라카', date: '2026-05-21', location: '서울', posterUrl: HomeSkku },
+  { id: 3, name: '고려대 입실렌티', date: '2026-05-28', location: '서울', posterUrl: null },
 ]
 
 const REVIEW_SETS = [
   [
-    { id: 1, festivalName: '이화여대 대동제', author: '유저A', content: '라인업이 정말 좋았어요!' },
-    { id: 2, festivalName: '연세대 아카라카', author: '유저B', content: '분위기 최고였습니다.' },
+    {
+      id: 1,
+      festivalName: '이화여대 대동제',
+      author: '유저A',
+      content: '올해 간 축제 중에 기억에 남았던 축제 다들 꼭 한번은 가보시길 이대축제',
+      profileUrl: ewha_logo
+    },
+    {
+      id: 2,
+      festivalName: '연세대 아카라카',
+      author: '유저B',
+      content: '올해 간 축제 중에 기억에 남았던 축제 다들 꼭 한번은 가보시길 이대축제',
+      profileUrl: ewha_logo
+    },
   ],
   [
-    { id: 3, festivalName: '고려대 입실렌티', author: '유저C', content: '매년 오고 싶어요!' },
-    { id: 4, festivalName: '부산대 고리',     author: '유저D', content: '부산까지 갈 가치 있어요.' }
+    {
+      id: 3,
+      festivalName: '고려대 입실렌티',
+      author: '유저C',
+      content: '매년 오고 싶어요! 분위기가 정말 최고였어요.',
+      profileUrl: ewha_logo
+    },
+    {
+      id: 4,
+      festivalName: '부산대 고리',
+      author: '유저D',
+      content: '부산까지 갈 가치 있어요. 강력 추천합니다!',
+      profileUrl: ewha_logo
+    },
   ],
 ]
 
@@ -31,77 +52,122 @@ export default function HomePage() {
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  const [festivals, setFestivals] = useState([])
-  const [reviews, setReviews]     = useState([])
+  const [festivals, setFestivals]       = useState([])
+  const [reviews, setReviews]           = useState([])
   const [reviewSetIdx, setReviewSetIdx] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading]       = useState(true)
 
   useEffect(() => {
-    // TODO: API 호출로 교체
     setFestivals(DUMMY_FESTIVALS)
     setReviews(REVIEW_SETS[0])
     setIsLoading(false)
   }, [])
 
-  // 추천 후기 타이틀 클릭 → 다음 세트로 업데이트
   const handleRefreshReviews = () => {
     const nextIdx = (reviewSetIdx + 1) % REVIEW_SETS.length
     setReviewSetIdx(nextIdx)
     setReviews(REVIEW_SETS[nextIdx])
-    // TODO: API 호출로 교체 — GET /reviews/recommended
   }
 
-  if (isLoading) return <p>불러오는 중...</p>
+  if (isLoading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-gray-400 text-sm font-sans">불러오는 중...</p>
+    </div>
+  )
 
   return (
-    <div>
-      {/* 인사말 */}
-      <h1>반가워요 {user?.nickname}님,<br />어느 축제를 기대하나요? 🎉</h1>
+    <div className="w-full max-w-[393px] bg-white min-h-screen relative">
 
-      {/* 축제 추천 */}
-      <section>
-        <h2>축제</h2>
-        <List
-          items={festivals}
-          renderItem={(festival) => (
-            <Card onClick={() => navigate(`/festivals/${festival.id}`)}>
-              {festival.posterUrl
-                ? <img src={festival.posterUrl} alt={festival.name} />
-                : <div>포스터</div>
-              }
-              <p>{festival.name}</p>
-              <p>{festival.date} · {festival.location}</p>
-            </Card>
-          )}
-        />
-        <Button onClick={() => navigate('/festivals')}>축제 전체 보기</Button>
-      </section>
+      {/* 상단 토글 + 검색 */}
+      <div className="flex items-center justify-between px-[6px] pt-[47px] mb-4">
+        <div className="flex gap-[50px]">
+          <ContentTabs />
+        </div>
+        <button
+          onClick={() => navigate('/search')}
+          className="cursor-pointer absolute top-[45px] right-[29px]"
+        >
+          <svg width="20" height="21" viewBox="0 0 20 21" fill="none">
+            <circle cx="9" cy="9" r="7" stroke="#000000" strokeWidth="2" />
+            <line x1="14" y1="14" x2="19" y2="19" stroke="#000000" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      {/* 인사말 */}
+      <div className="absolute top-[132px] left-[28px] right-[51px]">
+        <h1 className="text-[25px] font-bold text-gray-900 leading-[136%] font-sans">
+          반가워요 {user?.nickname ?? '멋사'}님<br />어느축제를 가볼까요?
+        </h1>
+      </div>
+
+      {/* 축제 가로 스크롤 배너 */}
+      <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide absolute top-[236px] left-[11px] right-0">
+        {festivals.map((festival, i) => (
+          <div
+            key={festival.id}
+            onClick={() => navigate(`/festivals/${festival.id}`)}
+            className={`flex-shrink-0 cursor-pointer rounded-[11px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] overflow-hidden w-[152px] h-[214px] min-w-[152px] ${
+              i % 2 === 0 ? 'mb-11' : 'mt-11'
+            }`}
+          >
+            {festival.posterUrl
+              ? <img
+                  src={festival.posterUrl}
+                  alt={festival.name}
+                  className="w-full h-full object-cover block"
+                />
+              : <div className="flex items-center justify-center bg-gradient-to-br from-primary-light to-primary w-full h-full">
+                  <p className="text-gray-900 font-bold text-sm text-center px-3 font-sans">{festival.name}</p>
+                </div>
+            }
+          </div>
+        ))}
+      </div>
 
       {/* 추천 후기 */}
-      <section>
+      <div className="absolute top-[544px] left-[28px] right-[291px]">
         <h2
           onClick={handleRefreshReviews}
-          style={{ cursor: 'pointer' }}
+          className="text-[20px] font-bold text-gray-900 leading-[136%] cursor-pointer whitespace-nowrap font-sans"
         >
-          추천 후기 🔄
+          추천 후기
         </h2>
-        <List
-          items={reviews}
-          renderItem={(review) => (
-            <Card>
-              <p>{review.festivalName}</p>
-              <p>{review.content}</p>
-              <p>{review.author}</p>
-            </Card>
-          )}
-        />
-      </section>
+        <div className="flex flex-col w-[330px]">
+          {reviews.map((review, index) => (
+            <div key={review.id}>
+              <div className="flex gap-3 items-start py-4">
+                <span className="text-gray-900 leading-[136%] tracking-[-0.01em] shrink-0 font-inter font-normal text-[33px]">
+                  "
+                </span>
+                <div className="flex items-start gap-[7px]">
+                  <div className="w-[33px] h-[33px] rounded-full overflow-hidden shrink-0 bg-gray-200 mt-[2px]">
+                    {review.profileUrl && (
+                      <img
+                        src={review.profileUrl}
+                        alt={review.author}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-[9px]">
+                    <p className="text-[13px] font-normal text-gray-900 leading-[136%] tracking-[-0.01em] font-sans">
+                      {review.content}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-gray-900 leading-[136%] tracking-[-0.01em] shrink-0 font-inter font-normal text-[33px]">
+                  "
+                </span>
+              </div>
+              {index < reviews.length - 1 && (
+                <div className="w-[314px] h-[1px] bg-black opacity-30" />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
-      {/* 소통 바로가기 */}
-      <section>
-        <h2>소통</h2>
-        <Button onClick={() => navigate('/community')}>소통 전체 보기</Button>
-      </section>
     </div>
   )
 }

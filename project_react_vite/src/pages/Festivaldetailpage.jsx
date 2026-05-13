@@ -1,42 +1,29 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import Button from '../components/Button'
-import Card from '../components/Card'
-import List from '../components/List'
-
-// 와이어프레임 5.2 정보 게시물
-// - 학교명 + 축제명
-// - URL 공유 버튼
-// - 포스터 이미지 영역
-// - 학교 / 날짜 / 장소 정보
-// - 라인업 목록
-// - 스케줄 On/Off 토글
-// - 연결된 후기 목록
+import detail_ewha from '../assets/detail_ewha.svg'
+import ewha_logo from '../assets/ewha_logo.svg'
+import useAppStore from '../store/useAppStore'
 
 const DUMMY_DETAIL = {
   1: {
     id: 1,
     school: '이화여자대학교',
-    name: '이화여대 대동제',
-    date: '2026-05-14 ~ 2026-05-16',
-    location: '이화여자대학교 대강당 앞',
-    posterUrl: null, // TODO: 실제 이미지 URL
+    name: '이화여자대학교 대동제',
+    date: '2026년 05월 21일~ 2026년 05월 24일',
+    location: '서울 서대문구 이화여대길 52 이화여자대학교 대강당',
+    posterUrl: detail_ewha,
     lineup: ['아이유', '뉴진스', '르세라핌'],
     schedule: [
       { day: '5/14', events: ['오후 6시 — 아이유'] },
       { day: '5/15', events: ['오후 5시 — 뉴진스', '오후 7시 — 르세라핌'] },
     ],
-    // reviews: [
-    //   { id: 1, author: '유저A', content: '라인업 너무 좋았어요!', rating: 5 },
-    //   { id: 2, author: '유저B', content: '분위기가 최고였습니다.', rating: 4 },
-    // ],
   },
-  2: {                        // 추가
+  2: {
     id: 2,
-    school: '연세대학교',
-    name: '연세대 아카라카',
-    date: '2026-05-21 ~ 2026-05-23',
-    location: '연세대학교 노천극장',
+    school: '서강대학교',
+    name: '서강대학교 대동제',
+    date: '2026년 05월 21일~ 2026년 05월 23일',
+    location: '서강대학교 청년광장',
     posterUrl: null,
     lineup: ['뉴진스', 'aespa'],
     schedule: [
@@ -49,95 +36,109 @@ const DUMMY_DETAIL = {
 export default function FestivalDetailPage() {
   const { id }   = useParams()
   const navigate = useNavigate()
+  const { showToast } = useAppStore()
 
   const [festival, setFestival]         = useState(null)
   const [isLoading, setIsLoading]       = useState(true)
-  const [showSchedule, setShowSchedule] = useState(false) // 스케줄 On/Off 토글
+  const [showSchedule, setShowSchedule] = useState(false)
+  const [bookmarked, setBookmarked]     = useState(false)
 
   useEffect(() => {
-    // TODO: API 호출 — GET /festivals/:id
     const data = DUMMY_DETAIL[Number(id)] ?? null
     setFestival(data)
     setIsLoading(false)
   }, [id])
 
-  const handleShareUrl = () => {
-    navigator.clipboard.writeText(window.location.href)
-    alert('링크가 복사되었습니다!')
+  const handleBookmark = () => {
+    setBookmarked((prev) => {
+      const next = !prev
+      showToast(
+        next ? '즐겨찾기에 추가되었습니다!' : '즐겨찾기가 해제되었습니다.',
+        next ? 'success' : 'info'
+      )
+      return next
+    })
   }
 
-  if (isLoading) return <p>불러오는 중...</p>
-  if (!festival) return <p>축제 정보를 찾을 수 없습니다.</p>
+  if (isLoading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-gray-400 text-sm font-sans">불러오는 중...</p>
+    </div>
+  )
+  if (!festival) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-gray-400 text-sm font-sans">축제 정보를 찾을 수 없습니다.</p>
+    </div>
+  )
 
   return (
-    <div>
-      <Button onClick={() => navigate(-1)}>← 뒤로</Button>
+    <div className="bg-white min-h-screen relative">
 
-      {/* 학교명 + 공유 버튼 */}
-      <div>
-        <h1>{festival.school}</h1>
-        <Button onClick={handleShareUrl}>URL 공유</Button>
+      {/* 상단 헤더 */}
+      <div className="bg-white flex items-center justify-between px-[34px] h-[82px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)]">
+        <button onClick={() => navigate(-1)} className="cursor-pointer">
+          <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+            <path d="M6 1L1 6L6 11" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        <button className="cursor-pointer text-gray-900 font-bold">⋮</button>
       </div>
 
       {/* 포스터 이미지 */}
-      <div>
+      <div className="relative w-full h-[280px]">
         {festival.posterUrl
-          ? <img src={festival.posterUrl} alt={`${festival.name} 포스터`} />
-          : <div>포스터 이미지</div>
+          ? <img
+              src={festival.posterUrl}
+              alt={festival.name}
+              className="w-full h-[280px] object-cover rounded-b-[18px]"
+            />
+          : <div className="w-full h-[280px] bg-gradient-to-br from-primary-light to-primary flex items-center justify-center">
+              <p className="text-gray-900 font-bold text-lg font-sans">{festival.name}</p>
+            </div>
         }
       </div>
 
-      {/* 기본 정보 */}
-      <section>
-        <p>🏫 학교: {festival.school}</p>
-        <p>📅 날짜: {festival.date}</p>
-        <p>📍 장소: {festival.location}</p>
-      </section>
+      <div className="px-[28px] pt-5">
 
-      {/* 라인업 */}
-      <section>
-        <h2>라인업</h2>
-        <ul>
-          {festival.lineup.map((artist) => (
-            <li key={artist}>{artist}</li>
-          ))}
-        </ul>
-      </section>
-
-      {/* 스케줄 On/Off 토글 */}
-      <section>
-        <div>
-          <span>스케줄</span>
-          <Button onClick={() => setShowSchedule((prev) => !prev)}>
-            {showSchedule ? 'On' : 'Off'}
-          </Button>
+        {/* 정보 태그 */}
+        <div className="mb-2">
+          <span className="inline-flex items-center justify-center w-[49px] h-[29px] rounded-[10.86px] bg-primary/40 text-white text-[10.86px] font-bold font-sans">
+            정보
+          </span>
         </div>
-        {showSchedule && (
-          <div>
-            {festival.schedule.map((s) => (
-              <div key={s.day}>
-                <strong>{s.day}</strong>
-                <ul>
-                  {s.events.map((event) => (
-                    <li key={event}>{event}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
 
-      {/* 후기 목록 */}
-      <section>
-        <h2>소통하기</h2>
-        <p>이 축제에 대한 더 많은 이야기와 실시간 정보를 커뮤니티에서 확인하세요!</p>
-        
-        <Button onClick={() => navigate('/community')}>
-            커뮤니티 게시판으로 이동
-        </Button>
-      </section>
+        {/* 축제명 + 즐겨찾기 */}
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="text-[21.2px] font-bold text-gray-900 leading-[136%] tracking-[-0.01em] font-sans">
+            {festival.name}
+          </h1>
+          <button onClick={handleBookmark} className="cursor-pointer w-[18px] h-[18px]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="14" viewBox="0 0 15 14" fill={bookmarked ? '#000000' : 'none'}>
+              <path d="M6.67871 0.560669C6.81355 0.146432 7.39934 0.146432 7.53418 0.560669L8.73242 4.24719C8.85965 4.63853 9.22423 4.90344 9.63574 4.90344H13.5117C13.9475 4.90357 14.1289 5.46168 13.7764 5.7179L10.6406 7.99622C10.3078 8.23807 10.1679 8.66641 10.2949 9.05774L11.4932 12.7443C11.6277 13.1587 11.1534 13.5032 10.8008 13.2472L7.66504 10.9689C7.33208 10.727 6.88081 10.727 6.54785 10.9689L3.41211 13.2472C3.05949 13.5032 2.58518 13.1587 2.71973 12.7443L3.91797 9.05774C4.04498 8.66641 3.90512 8.23807 3.57227 7.99622L0.436523 5.7179C0.0839548 5.46168 0.265371 4.90356 0.701172 4.90344H4.57715C4.98866 4.90344 5.35324 4.63853 5.48047 4.24719L6.67871 0.560669Z" stroke="black" strokeWidth="0.5"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* 날짜 */}
+        <p className="text-[14.251px] font-normal text-gray-900 leading-[136%] tracking-[-0.01em] font-sans">
+          {festival.date}
+        </p>
+
+        {/* 학교 로고 + 주소 */}
+        <div className="flex items-center gap-[17px] mt-[30.71px]">
+          <div className="w-[52px] h-[52px] rounded-full overflow-hidden bg-gray-200 shrink-0">
+            <img
+              src={ewha_logo}
+              alt="학교 로고"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <p className="text-[12px] font-normal leading-[136%] tracking-[-0.01em] text-black/60 font-sans max-w-[140px]">
+            {festival.location}
+          </p>
+        </div>
+
+      </div>
     </div>
   )
-};
-
+}
