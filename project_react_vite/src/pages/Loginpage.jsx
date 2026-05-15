@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import useAppStore from '../store/useAppStore'
+import useAuthStore from '../store/useAuthStore'
+import useToastStore from '../store/useToastStore'
 import kakao from '../assets/kakao.svg'
 import apple from '../assets/apple.svg'
 
 export default function LoginPage() {
   const navigate    = useNavigate()
   const location    = useLocation()
-  const { login, showToast } = useAppStore()
+  const { login } = useAuthStore()
+  const { showToast } = useToastStore()
 
   const [email, setEmail]                 = useState('')
   const [emailFocus, setEmailFocus]       = useState(false)

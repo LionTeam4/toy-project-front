@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import detail_ewha from '../assets/detail_ewha.svg'
 import ewha_logo from '../assets/ewha_logo.svg'
-import useAppStore from '../store/useAppStore'
+import useToastStore from '../store/useToastStore'
 
 const DUMMY_DETAIL = {
   1: {
@@ -36,7 +36,7 @@ const DUMMY_DETAIL = {
 export default function FestivalDetailPage() {
   const { id }   = useParams()
   const navigate = useNavigate()
-  const { showToast } = useAppStore()
+  const { showToast } = useToastStore()
 
   const [festival, setFestival]         = useState(null)
   const [isLoading, setIsLoading]       = useState(true)

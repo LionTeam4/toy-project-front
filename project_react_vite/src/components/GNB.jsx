@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import useAppStore from '../hooks/useAppStore'
+import useAuthStore from '../store/useAuthStore'
 
 const NAV_ITEMS = [
   { to: '/',          label: '홈',  end: true },
@@ -10,7 +10,7 @@ const NAV_ITEMS = [
 ]
 
 export default function GNB() {
-  const { user, logout } = useAppStore()
+  const { user, logout } = useAuthStore()
   const navigate = useNavigate()
 
   // if (!user) return null

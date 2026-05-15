@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../components/Button';
 import useAuth from '../hooks/useAuth';
-import useAppStore from '../store/useAppStore';
+import useToastStore from '../store/useToastStore'
+import useDialogStore from '../store/useDialogStore';
 import detail_butter from '../assets/detail_butter.svg'
 import profile from '../assets/profile.svg'
 
@@ -27,7 +28,7 @@ export function PostDetailPage() {
   const { id }   = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { showDialog } = useAppStore();
+  const { showDialog } = useDialogStore();
 
   const [post, setPost]           = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -167,7 +168,7 @@ export function PostNewPage() {
   const navigate     = useNavigate();
   const { pathname } = useLocation();
   const fileInputRef = useRef(null);
-  const { showToast } = useAppStore();
+  const { showToast } = useToastStore();
 
   const [type, setType]             = useState(pathname.includes('reviews') ? '후기' : '소통');
   const [title, setTitle]           = useState('');
@@ -298,7 +299,7 @@ export function PostNewPage() {
 export function PostEditPage() {
   const { id }   = useParams();
   const navigate = useNavigate();
-  const { showToast } = useAppStore();
+  const { showToast } = useToastStore();
 
   const [type, setType]       = useState('소통');
   const [title, setTitle]     = useState('');

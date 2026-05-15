@@ -1,6 +1,7 @@
-import useAppStore from '../store/useAppStore'
+import useAuthStore from '../store/useAuthStore'
 
 export default function useAuth() {
-  const { user, isLoading, login, logout, isLoggedIn } = useAppStore()
-  return { user, isLoading, login, logout, isLoggedIn }
+  const { user, login, logout } = useAuthStore()
+  const isLoggedIn = !!user
+  return { user, login, logout, isLoggedIn }
 }

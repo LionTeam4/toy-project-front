@@ -1,8 +1,8 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import useAppStore from '../store/useAppStore'
+import useAuth from '../hooks/useAuth'
 
 export default function ProtectedRoute({ children }) {
-  const { isLoggedIn } = useAppStore()
+  const { isLoggedIn } = useAuth()
   const location = useLocation()
 
   if (!isLoggedIn) {

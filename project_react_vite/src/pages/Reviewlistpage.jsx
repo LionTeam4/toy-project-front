@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import review_ewha from '../assets/review_ewha.svg'
-import useAppStore from '../store/useAppStore'
+import useToastStore from '../store/useToastStore'
 
 const DUMMY_REVIEWS = [
   { id: 1, festivalName: '이화여자대학교', author: '유저A', content: '재미있음', likes: 24, createdAt: '2026-04-01', rating: 5, profileUrl: review_ewha },
@@ -11,7 +11,7 @@ const DUMMY_REVIEWS = [
 
 export default function Reviewlistpage() {
   const navigate = useNavigate()
-  const { showToast } = useAppStore()
+  const { showToast } = useToastStore()
   const [reviews, setReviews]     = useState([])
   const [bookmarks, setBookmarks] = useState({})
 
