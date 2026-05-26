@@ -114,6 +114,7 @@ export default function HomePage() {
               i % 2 === 0 ? 'mt-11' : 'mb-11'
             }`}
           >
+            {/* 백엔드 이미지 수정필요! */}
             {festival.poster
               ? <img
                   src={`${import.meta.env.VITE_API_BASE_URL}${festival.poster}`}
