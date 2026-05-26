@@ -1,47 +1,37 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import ewha from '../assets/ewha.svg'
-import sogang from '../assets/sogang.svg'
-import skku from '../assets/skku.svg'
 import FestivalCard from '../components/FestivalCard'
+import { getFestivalList } from '../apis/festival'
 
-const DUMMY_FESTIVALS = [
-  {
-    id: 1,
-    name: '이화여대 대동제',
-    date: '2026년 05월 21일 ~ 2026년 05월 24일',
-    school: '이화여자대학교',
-    posterUrl: ewha,
-  },
-  {
-    id: 2,
-    name: '서강대',
-    date: '2026년 05월 21일 ~ 2026년 05월 24일',
-    school: '서강대학교',
-    posterUrl: sogang,
-  },
-  {
-    id: 3,
-    name: '성균관대',
-    date: '2026년 05월 21일 ~ 2026년 05월 24일',
-    school: '성균관대학교',
-    posterUrl: skku,
-  },
-]
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 export default function FestivalListPage() {
   const navigate = useNavigate()
 
   const [festivals, setFestivals] = useState([])
-  const [filtered, setFiltered] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    setFestivals(DUMMY_FESTIVALS)
+    const fetchFestivals = async () => {
+      try {
+        const response = await getFestivalList()
+        console.log('API 성공', response.data)
+        setFestivals(response.data)
+      } catch (error) {
+        console.error('API 실패', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchFestivals()
   }, [])
 
-  useEffect(() => {
-    setFiltered(festivals)
-  }, [festivals])
+  if (isLoading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-gray-400 text-sm font-sans">불러오는 중...</p>
+    </div>
+  )
 
   return (
     <div className="relative min-h-screen bg-white">
@@ -63,7 +53,7 @@ export default function FestivalListPage() {
           </svg>
         </button>
 
-        <p className="flex-1 text-center text-[13.58px] font-bold leading-[136%] tracking-[-0.01em] text-black">
+        <p className="flex-1 text-center text-[13.58px] font-bold leading-[136%] tracking-[-0.01em] text-black font-sans">
           정보
         </p>
 
@@ -72,10 +62,16 @@ export default function FestivalListPage() {
 
       {/* 리스트 */}
       <div className="absolute left-[31px] top-[113px] flex flex-col gap-3">
-        {filtered.map((festival, index) => (
+        {festivals.map((festival, index) => (
           <FestivalCard
             key={festival.id}
-            festival={festival}
+            festival={{
+              ...festival,
+              poster: festival.poster
+                ? `${BASE_URL}${festival.poster}`
+                : null,
+              date: `${festival.start_date} ~ ${festival.end_date}`,
+            }}
             index={index}
             onClick={() => navigate(`/festivals/${festival.id}`)}
           />

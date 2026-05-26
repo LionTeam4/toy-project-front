@@ -1,37 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import detail_ewha from '../assets/detail_ewha.svg'
 import ewha_logo from '../assets/ewha_logo.svg'
 import useToastStore from '../store/useToastStore'
+import { getFestivalDetail } from "../apis/festival"
 
-const DUMMY_DETAIL = {
-  1: {
-    id: 1,
-    school: '이화여자대학교',
-    name: '이화여자대학교 대동제',
-    date: '2026년 05월 21일~ 2026년 05월 24일',
-    location: '서울 서대문구 이화여대길 52 이화여자대학교 대강당',
-    posterUrl: detail_ewha,
-    lineup: ['아이유', '뉴진스', '르세라핌'],
-    schedule: [
-      { day: '5/14', events: ['오후 6시 — 아이유'] },
-      { day: '5/15', events: ['오후 5시 — 뉴진스', '오후 7시 — 르세라핌'] },
-    ],
-  },
-  2: {
-    id: 2,
-    school: '서강대학교',
-    name: '서강대학교 대동제',
-    date: '2026년 05월 21일~ 2026년 05월 23일',
-    location: '서강대학교 청년광장',
-    posterUrl: null,
-    lineup: ['뉴진스', 'aespa'],
-    schedule: [
-      { day: '5/21', events: ['오후 6시 — 뉴진스'] },
-      { day: '5/22', events: ['오후 6시 — aespa'] },
-    ],
-  },
-}
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 export default function FestivalDetailPage() {
   const { id }   = useParams()
@@ -40,13 +13,22 @@ export default function FestivalDetailPage() {
 
   const [festival, setFestival]         = useState(null)
   const [isLoading, setIsLoading]       = useState(true)
-  const [showSchedule, setShowSchedule] = useState(false)
   const [bookmarked, setBookmarked]     = useState(false)
 
   useEffect(() => {
-    const data = DUMMY_DETAIL[Number(id)] ?? null
-    setFestival(data)
-    setIsLoading(false)
+    const fetchFestivalDetail = async () => {
+      try {
+        const response = await getFestivalDetail(id)
+        console.log('API 성공', response.data)
+        setFestival(response.data)
+      } catch (error) {
+        console.error('API 실패', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchFestivalDetail()
   }, [id])
 
   const handleBookmark = () => {
@@ -71,6 +53,13 @@ export default function FestivalDetailPage() {
     </div>
   )
 
+  // 날짜 포맷 변환 (2026-05-20 → 2026년 05월 20일)
+  const formatDate = (dateStr) => {
+    if (!dateStr) return ''
+    const [year, month, day] = dateStr.split('-')
+    return `${year}년 ${month}월 ${day}일`
+  }
+
   return (
     <div className="bg-white min-h-screen relative">
 
@@ -86,14 +75,14 @@ export default function FestivalDetailPage() {
 
       {/* 포스터 이미지 */}
       <div className="relative w-full h-[280px]">
-        {festival.posterUrl
+        {festival.poster
           ? <img
-              src={festival.posterUrl}
-              alt={festival.name}
+              src={`${BASE_URL}${festival.poster}`}
+              alt={festival.school}
               className="w-full h-[280px] object-cover rounded-b-[18px]"
             />
-          : <div className="w-full h-[280px] bg-gradient-to-br from-primary-light to-primary flex items-center justify-center">
-              <p className="text-gray-900 font-bold text-lg font-sans">{festival.name}</p>
+          : <div className="w-full h-[280px] bg-gradient-to-br from-primary-light to-primary flex items-center justify-center rounded-b-[18px]">
+              <p className="text-gray-900 font-bold text-lg font-sans">{festival.school}</p>
             </div>
         }
       </div>
@@ -110,7 +99,7 @@ export default function FestivalDetailPage() {
         {/* 축제명 + 즐겨찾기 */}
         <div className="flex items-center gap-2 mb-1">
           <h1 className="text-[21.2px] font-bold text-gray-900 leading-[136%] tracking-[-0.01em] font-sans">
-            {festival.name}
+            {festival.school}
           </h1>
           <button onClick={handleBookmark} className="cursor-pointer w-[18px] h-[18px]">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="14" viewBox="0 0 15 14" fill={bookmarked ? '#000000' : 'none'}>
@@ -121,7 +110,7 @@ export default function FestivalDetailPage() {
 
         {/* 날짜 */}
         <p className="text-[14.251px] font-normal text-gray-900 leading-[136%] tracking-[-0.01em] font-sans">
-          {festival.date}
+          {formatDate(festival.start_date)} ~ {formatDate(festival.end_date)}
         </p>
 
         {/* 학교 로고 + 주소 */}
@@ -134,7 +123,7 @@ export default function FestivalDetailPage() {
             />
           </div>
           <p className="text-[12px] font-normal leading-[136%] tracking-[-0.01em] text-black/60 font-sans max-w-[140px]">
-            {festival.location}
+            {festival.fes_location}
           </p>
         </div>
 

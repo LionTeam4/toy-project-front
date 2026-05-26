@@ -19,7 +19,12 @@ export default function SignupPage() {
       return
     }
     setError('')
-    navigate('/signup/profile')
+    navigate('/signup/profile', {
+      state:{
+        username: email,
+        password,
+      }
+    })
   }
 
   return (

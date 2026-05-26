@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { login as loginAPI } from '../apis/auth'
 import useAuthStore from '../store/useAuthStore'
 import useToastStore from '../store/useToastStore'
 import kakao from '../assets/kakao.svg'
@@ -19,15 +20,41 @@ export default function LoginPage() {
 
   const from = location.state?.from?.pathname ?? '/'
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       showToast('아이디와 비밀번호를 입력해주세요.', 'error')
       return
     }
-    setError('')
-    login({ email, nickname: '유저A', isOnboardingCompleted: true })
-    showToast('로그인되었습니다!', 'success')
-    navigate(from, { replace: true })
+
+    try {
+      const response = await loginAPI({
+        username: email,
+        password,
+      })
+
+      console.log('로그인 성공')
+      console.log(response.data)
+
+      const { id, access, refresh, username } = response.data
+
+      localStorage.setItem('accessToken', access)
+      localStorage.setItem('refreshToken', refresh)
+
+      login({
+        id,
+        username,
+      })
+
+      showToast('로그인되었습니다!', 'success')
+
+      navigate('/')
+    }
+
+    catch(error){
+      console.log(error.response?.data)
+
+      showToast('로그인 실패', 'error')
+    }
   }
 
   return (

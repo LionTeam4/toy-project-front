@@ -2,16 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
 import ContentTabs from '../components/ContentTabs'
-import HomeEwha from '../assets/HomeEwha.svg'
-import HomeSkku from '../assets/HomeSkku.svg'
 import ewha_logo from '../assets/ewha_logo.svg'
-
-
-const DUMMY_FESTIVALS = [
-  { id: 1, name: '이화여대 대동제', date: '2026-05-14', location: '서울', posterUrl: HomeEwha },
-  { id: 2, name: '연세대 아카라카', date: '2026-05-21', location: '서울', posterUrl: HomeSkku },
-  { id: 3, name: '고려대 입실렌티', date: '2026-05-28', location: '서울', posterUrl: null },
-]
+import { getFestivalList } from "../apis/festival"
 
 const REVIEW_SETS = [
   [
@@ -58,9 +50,20 @@ export default function HomePage() {
   const [isLoading, setIsLoading]       = useState(true)
 
   useEffect(() => {
-    setFestivals(DUMMY_FESTIVALS)
-    setReviews(REVIEW_SETS[0])
-    setIsLoading(false)
+    const fetchData = async () => {
+      try {
+        const response = await getFestivalList()
+        console.log("API 성공", response.data)
+        setFestivals(response.data)
+        setReviews(REVIEW_SETS[0])
+      } catch (error) {
+        console.error("API 실패", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
   }, [])
 
   const handleRefreshReviews = () => {
@@ -108,17 +111,17 @@ export default function HomePage() {
             key={festival.id}
             onClick={() => navigate(`/festivals/${festival.id}`)}
             className={`flex-shrink-0 cursor-pointer rounded-[11px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] overflow-hidden w-[152px] h-[214px] min-w-[152px] ${
-              i % 2 === 0 ? 'mb-11' : 'mt-11'
+              i % 2 === 0 ? 'mt-11' : 'mb-11'
             }`}
           >
-            {festival.posterUrl
+            {festival.poster
               ? <img
-                  src={festival.posterUrl}
-                  alt={festival.name}
+                  src={`${import.meta.env.VITE_API_BASE_URL}${festival.poster}`}
+                  alt={festival.school}
                   className="w-full h-full object-cover block"
                 />
               : <div className="flex items-center justify-center bg-gradient-to-br from-primary-light to-primary w-full h-full">
-                  <p className="text-gray-900 font-bold text-sm text-center px-3 font-sans">{festival.name}</p>
+                  <p className="text-gray-900 font-bold text-sm text-center px-3 font-sans">{festival.school}</p>
                 </div>
             }
           </div>

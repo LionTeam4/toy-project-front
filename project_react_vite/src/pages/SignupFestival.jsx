@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { signup } from '../apis/auth'
 
 const SCHOOLS = {
   'ㄱ': ['가야대학교', '가야대학교'],
@@ -8,6 +9,17 @@ const SCHOOLS = {
 
 export default function SignupFestival() {
   const navigate = useNavigate()
+  const location = useLocation()
+
+  const {
+    username,
+    password,
+    nickname, 
+    myschool,
+    birth,
+    profile,
+  } = location.state || {}
+
   const [selectedSchools, setSelectedSchools] = useState([])
 
   const toggleSchool = (key) => {
@@ -16,8 +28,49 @@ export default function SignupFestival() {
     )
   }
 
-  const handleSubmit = () => {
-    navigate('/login')
+  const handleSubmit = async () => {
+
+    try {
+
+      const response = await signup({
+
+        username,
+
+        password,
+
+        nickname,
+
+        profile,
+
+        myschool,
+
+        birth,
+
+        likearea: "서울",
+
+        likeschool:
+          selectedSchools.length > 0
+            ? selectedSchools[0]
+            : "",
+
+      })
+
+      console.log("회원가입 성공")
+
+      console.log(response.data)
+
+      navigate('/login')
+
+    } catch(error) {
+
+      console.error("회원가입 실패")
+
+      console.log(error.response)
+
+      console.log(error.response.data)
+
+    }
+
   }
 
   return (
@@ -56,9 +109,9 @@ export default function SignupFestival() {
                   return (
                     <button
                       key={key}
-                      onClick={() => toggleSchool(key)}
+                      onClick={() => toggleSchool(school)}
                       className={`w-[96px] h-[43px] rounded-[18px] text-sm cursor-pointer font-sans ${
-                        selectedSchools.includes(key)
+                        selectedSchools.includes(school)
                           ? 'border-2 border-primary text-gray-900 bg-primary/10'
                           : 'bg-gray-50 text-gray-600'
                       }`}

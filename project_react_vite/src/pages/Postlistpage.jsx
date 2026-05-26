@@ -1,21 +1,36 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import butter from '../assets/butter.svg'
 import FestivalCard from '../components/FestivalCard'
+import { getPostList } from '../apis/festival'
 
-const DUMMY_POSTS = [
-  { id: 1, name: '이화여자대학교', school: '이화여자대학교', content: '이화여자대학교 대동제 버터떡 판다', posterUrl: butter },
-  { id: 2, name: '축제 추천 받음', school: '연세대학교',     content: '5월 22일 축제 추천 받는다',        posterUrl: null },
-  { id: 3, name: '이대 라인업',   school: '이화여자대학교', content: '이대 라인업 누구임',               posterUrl: null },
-]
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 export default function PostListPage() {
   const navigate = useNavigate()
   const [posts, setPosts] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    setPosts(DUMMY_POSTS)
+    const fetchPosts = async () => {
+      try {
+        const response = await getPostList()
+        console.log('API 성공', response.data)
+        setPosts(response.data)
+      } catch (error) {
+        console.error('API 실패', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPosts()
   }, [])
+
+  if (isLoading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-gray-400 text-sm font-sans">불러오는 중...</p>
+    </div>
+  )
 
   return (
     <div className="bg-white min-h-screen relative">
@@ -46,8 +61,8 @@ export default function PostListPage() {
             festival={post}
             index={index}
             type="소통"
-            titleField="name"
-            subField="content"
+            titleField="title"
+            subField="contents"
             onClick={() => navigate(`/community/${post.id}`)}
           />
         ))}

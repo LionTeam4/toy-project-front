@@ -1,8 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 export default function SignupProfile() {
   const navigate = useNavigate()
+  const location = useLocation()
+
+  const { username, password } = location.state || {}
 
   const [nickname, setNickname]     = useState('')
   const [school, setSchool]         = useState('')
@@ -13,15 +16,37 @@ export default function SignupProfile() {
   const [birth, setBirth]           = useState('')
 
   const handleNext = () => {
+
     if (!nickname || !school) {
+
       setError('닉네임과 학교를 입력해주세요.')
+
       return
     }
+
     setError('')
-    navigate('/signup/festival')
+
+    navigate('/signup/festival', {
+
+      state: {
+
+        username,
+        password,
+
+        nickname,
+
+        myschool: school,
+
+        birth,
+
+        profile: null,
+
+      },
+
+    })
   }
 
-  const BIRTH_OPTIONS = ['2000년', '2001년', '2002년', '2003년', '2004년', '2005년']
+  const BIRTH_OPTIONS = ['2000-01-01', '2001-01-01', '2002-01-01', '2003-01-01', '2004-01-01', '2000-01-01']
 
   return (
     <div className="bg-gray-200 min-h-screen flex justify-center">
@@ -124,9 +149,9 @@ export default function SignupProfile() {
               </button>
               {birthOpen && (
                 <div className="absolute top-[60px] left-0 w-[318px] bg-white rounded-[20px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] z-10 overflow-hidden">
-                  {BIRTH_OPTIONS.map((b) => (
+                  {BIRTH_OPTIONS.map((b, index) => (
                     <button
-                      key={b}
+                      key={`${b}-${index}`}
                       onClick={() => { setBirth(b); setBirthOpen(false) }}
                       className="w-full px-4 py-3 text-left text-[15px] text-gray-900 hover:bg-gray-50 cursor-pointer font-sans"
                     >

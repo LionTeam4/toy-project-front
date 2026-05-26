@@ -40,8 +40,8 @@ export default function FestivalCard({
 
       {/* 포스터 */}
       <div className="absolute right-[16px] top-[18px] h-[86px] w-[84px] overflow-hidden rounded-[11px] bg-gray-200">
-        {festival.posterUrl && (
-          <img src={festival.posterUrl} alt={festival.name} className="h-full w-full object-cover" />
+        {festival.poster && (
+          <img src={festival.poster} alt={festival.name} className="h-full w-full object-cover" />
         )}
         <div className="absolute right-[6px] top-[6px] z-10">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 15 14" fill="none">

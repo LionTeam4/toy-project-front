@@ -4,22 +4,10 @@ import Button from '../components/Button';
 import useAuth from '../hooks/useAuth';
 import useToastStore from '../store/useToastStore'
 import useDialogStore from '../store/useDialogStore';
-import detail_butter from '../assets/detail_butter.svg'
 import profile from '../assets/profile.svg'
+import { getCommunityDetail, createComment, createCommunityPost, updateCommunityPost, deleteCommunityPost } from '../apis/community';
 
-const DUMMY_POSTS = {
-  1: {
-    id: 1,
-    title: '이화여대 버터떡',
-    school: '이화여자대학교',
-    author: '유저A',
-    content: '이화여대 축제에 버터떡 파는 부스 어디인가요',
-    imageUrl: detail_butter,
-    likes: 30,
-    createdAt: '2025.03.12',
-    type: '소통',
-  },
-};
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 const Postpage = () => <PostDetailPage />;
 
@@ -29,25 +17,80 @@ export function PostDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showDialog } = useDialogStore();
+  const { showToast } = useToastStore();
 
   const [post, setPost]           = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [comment, setComment]     = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);  
 
   useEffect(() => {
-    const data = DUMMY_POSTS[Number(id)] ?? null;
-    setPost(data);
-    setIsLoading(false);
+    const fetchPost = async () => {
+      try {
+        const response = await getCommunityDetail(id)
+        console.log('API 성공', response.data)
+        setPost(response.data)
+      } catch (error) {
+        console.error('API 실패', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchPost()
   }, [id]);
 
   const handleDelete = () => {
     showDialog(
       '게시글 삭제',
       '정말 삭제하시겠습니까?',
-      () => navigate('/community'),
+      async () => {
+        try {
+          await deleteCommunityPost(id)
+          console.log('게시글 삭제 성공')
+          showToast('게시글이 삭제되었습니다.', 'success')
+          navigate('/community')
+        }
+        
+        catch(error){
+          console.error('게시글 삭제 실패', error)
+          console.log(error.response?.data)
+          showToast('게시글 삭제 실패', 'error')
+        }
+      },
       () => {}
-    );
+    )
   };
+
+  const handleCommentSubmit = async () => {
+    if (!comment.trim()) return
+    try {
+      setIsSubmitting(true)
+      const response = await createComment({
+        post: Number(id),
+        contents: comment,
+      })
+      console.log('댓글 작성 성공')
+      console.log(response.data)
+      
+      setPost((prev) => ({
+        ...prev,
+        comments: [...(prev.comments || []), response.data],
+      }))
+
+      showToast('댓글이 등록되었습니다!', 'success')
+      setComment('')
+
+    } catch (error) {
+      console.error('댓글 작성 실패', error)
+      console.log(error.response?.data)
+
+      showToast('댓글 등록에 실패했습니다.', 'error')
+      
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -60,29 +103,76 @@ export function PostDetailPage() {
     </div>
   );
 
-  const isAuthor = user?.nickname === post.author;
-
   return (
     <div className="bg-white min-h-screen pb-20">
 
       {/* 상단 헤더 */}
       <div className="bg-white flex items-center justify-between px-[34px] h-[82px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)]">
-        <button onClick={() => navigate(-1)} className="cursor-pointer">
+
+        <button
+          onClick={() => navigate(-1)}
+          className="cursor-pointer"
+        >
           <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
-            <path d="M6 1L1 6L6 11" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path
+              d="M6 1L1 6L6 11"
+              stroke="#000000"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
+
         <p className="text-[13.58px] font-bold text-gray-900 leading-[136%] tracking-[-0.01em] font-sans">
           소통
         </p>
-        <button onClick={handleDelete} className="cursor-pointer text-gray-900 font-bold">⋮</button>
-      </div>
+
+        <div className="relative">
+
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="cursor-pointer text-gray-900 font-bold"
+          >
+            ⋮
+          </button>
+
+          {showMenu && (
+
+            <div className="absolute right-0 top-8 bg-white rounded-xl shadow-lg border w-[120px] overflow-hidden z-50">
+
+              <button
+                onClick={() => {
+                  navigate(`/community/edit/${id}`)
+                }}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50"
+              >
+                수정하기
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowMenu(false)
+                  handleDelete()
+                }}
+                className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50"
+              >
+                삭제하기
+              </button>
+
+            </div>
+
+          )}
+
+        </div>
+
+</div>
 
       {/* 이미지 영역 */}
-      {post.imageUrl && (
+      {post.image && (
         <div className="w-[393px] h-[300px] overflow-hidden rounded-b-[18px]">
           <img
-            src={post.imageUrl}
+            src={`${BASE_URL}${post.image}`}
             alt="게시글 이미지"
             className="w-full h-full object-cover object-bottom"
           />
@@ -94,7 +184,7 @@ export function PostDetailPage() {
         {/* 소통 태그 */}
         <div className="mb-2">
           <span className="inline-flex items-center justify-center w-[49px] h-[29px] rounded-[10.86px] bg-primary/30 text-white text-[10.86px] font-bold leading-[136%] tracking-[-0.01em] font-sans">
-            {post.type ?? '소통'}
+            소통
           </span>
         </div>
 
@@ -105,7 +195,7 @@ export function PostDetailPage() {
 
         {/* 날짜 */}
         <p className="text-[13px] font-normal leading-[136%] tracking-[-0.01em] text-black/50 mb-4 font-sans">
-          {post.createdAt} 작성
+          {post.created?.slice(0, 10)} 작성
         </p>
 
         {/* 학교 태그 */}
@@ -117,22 +207,34 @@ export function PostDetailPage() {
 
         {/* 본문 */}
         <p className="text-gray-900 text-[13px] font-normal leading-[136%] tracking-[-0.01em] mb-6 font-sans">
-          {post.content}
+          {post.contents}
         </p>
 
         {/* 댓글 */}
-        <div className="flex items-start gap-3 mb-6">
-          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-            <img src={profile} alt="프로필" className="w-full h-full object-cover" />
+        {post.comments?.map((comment) => (
+          <div
+            key={comment.id}
+            className="flex items-start gap-3 mb-6"
+          >
+            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+              <img
+                src={profile}
+                alt="프로필"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-900 mt-0.5 font-sans">
+                {comment.contents}
+              </p>
+
+              <p className="text-xs text-gray-400 mt-1">
+                {comment.created?.slice(0,10)}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900 font-sans">아기사자</p>
-            <p className="text-sm text-gray-900 mt-0.5 font-sans">
-              학문관 12번 부스에파는 버터떡이 맛있어요 맛있어요
-            </p>
-            <p className="text-xs text-gray-400 mt-1 font-sans">03.27 13:41</p>
-          </div>
-        </div>
+        ))}
 
       </div>
 
@@ -146,7 +248,11 @@ export function PostDetailPage() {
               onChange={(e) => setComment(e.target.value)}
               className="flex-1 text-sm outline-none placeholder:text-gray-400 bg-transparent font-sans"
             />
-            <button className="cursor-pointer flex-shrink-0">
+            <button
+              onClick={handleCommentSubmit}
+              disabled={isSubmitting}
+              className="cursor-pointer flex-shrink-0"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" width="21" height="22" viewBox="0 0 21 22" fill="none">
                 <path d="M1.27173 5.82764L10.4959 10.8063" stroke="black" strokeWidth="1.4" strokeLinecap="round"/>
                 <path d="M20.3054 1.073L15.7139 20.6525" stroke="black" strokeWidth="1.4" strokeLinecap="round"/>
@@ -173,6 +279,7 @@ export function PostNewPage() {
   const [type, setType]             = useState(pathname.includes('reviews') ? '후기' : '소통');
   const [title, setTitle]           = useState('');
   const [school, setSchool]         = useState('이화여자대학교');
+  const schools = [ '이화여자대학교', '연세대학교', '고려대학교', '서강대학교', ]
   const [content, setContent]       = useState('');
   const [previewUrl, setPreviewUrl] = useState(null);
   const [error, setError]           = useState('');
@@ -183,14 +290,38 @@ export function PostNewPage() {
     setPreviewUrl(URL.createObjectURL(file));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+
     if (!title.trim() || !content.trim()) {
-      setError('제목과 내용을 입력해주세요.');
-      return;
+      setError('제목과 내용을 입력해주세요.')
+      return
     }
-    showToast('게시글이 성공적으로 등록되었습니다!', 'success');
-    navigate('/community');
-  };
+
+    try {
+
+      const response = await createCommunityPost({
+        title,
+        school,
+        contents: content,
+      })
+
+      console.log('게시글 작성 성공')
+      console.log(response.data)
+
+      showToast('게시글이 등록되었습니다!', 'success')
+
+      navigate('/community')
+
+    }
+
+    catch(error){
+
+      console.error('게시글 작성 실패', error)
+      console.log(error.response?.data)
+
+      showToast('게시글 등록 실패', 'error')
+    }
+  }
 
   const today = new Date().toLocaleDateString('ko-KR', {
     year: 'numeric', month: '2-digit', day: '2-digit'
@@ -219,7 +350,7 @@ export function PostNewPage() {
       <div className="px-[34px] flex flex-col gap-4">
 
         <input
-          placeholder="이화여대 버터떡"
+          placeholder="제목 작성하기"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="text-[21.2px] font-bold text-gray-900 outline-none placeholder:text-gray-900 w-full font-sans"
@@ -239,17 +370,23 @@ export function PostNewPage() {
         </div>
 
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <p className="text-[14px] font-bold leading-[136%] tracking-[-0.01em] text-gray-900 font-sans">학교 선택</p>
-            <button className="text-[28px] font-bold leading-none text-gray-900 cursor-pointer">+</button>
-          </div>
-          {school && (
-            <span className="inline-flex items-center justify-center bg-gray-50 rounded-[18px] w-[96px] h-[35px]">
-              <p className="text-[10.86px] font-bold leading-[136%] tracking-[-0.01em] text-center text-gray-900 font-sans">
-                {school}
-              </p>
-            </span>
-          )}
+          <p className="text-[14px] font-bold leading-[136%] tracking-[-0.01em] text-gray-900 mb-2 font-sans">
+            학교 선택
+          </p>
+
+          <select
+            value={school}
+            onChange={(e)=>setSchool(e.target.value)}
+            className="w-full h-[45px] border border-gray-300 rounded-[12px] px-4 text-sm outline-none font-sans"
+          >
+
+            {schools.map((s)=>(
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+
+          </select>
         </div>
 
         {type === '소통' && (
@@ -307,19 +444,50 @@ export function PostEditPage() {
   const [content, setContent] = useState('');
 
   useEffect(() => {
-    const post = DUMMY_POSTS[Number(id)];
-    if (post) {
-      setTitle(post.title);
-      setSchool(post.school);
-      setContent(post.content);
-      setType(post.type ?? '소통');
+    const fetchPost = async () => {
+      try {
+        const response = await getCommunityDetail(id)
+        const post = response.data
+        setTitle(post.title)
+        setSchool(post.school)
+        setContent(post.contents)
+        setType('소통')
+      } catch (error) {
+        console.error('API 실패', error)
+      }
     }
+    fetchPost()
   }, [id]);
 
-  const handleSubmit = () => {
-    showToast('게시글이 수정되었습니다!', 'success');
-    navigate(`/community/${id}`);
-  };
+  const handleSubmit = async () => {
+
+    try {
+
+      const response = await updateCommunityPost(id,{
+        title,
+        school,
+        contents: content,
+      })
+
+      console.log('게시글 수정 성공')
+      console.log(response.data)
+
+      showToast('게시글이 수정되었습니다!','success')
+
+      navigate(`/community/`)
+
+    }
+
+    catch(error){
+
+      console.error('게시글 수정 실패',error)
+      console.log(error.response?.data)
+
+      showToast('게시글 수정 실패','error')
+
+    }
+
+  }
 
   return (
     <div className="bg-white min-h-screen">
@@ -355,18 +523,54 @@ export function PostEditPage() {
         />
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <p className="text-sm font-bold text-gray-900 font-sans">학교 선택</p>
-            <button className="text-primary font-bold text-lg cursor-pointer leading-none">+</button>
+            <p className="text-[14px] font-bold leading-[136%] tracking-[-0.01em] text-gray-900 font-sans">
+              학교 선택
+            </p>
+
+            <select
+              value={school}
+              onChange={(e) => setSchool(e.target.value)}
+              className="border rounded-lg px-3 py-1 text-sm"
+            >
+              <option value="이화여자대학교">
+                이화여자대학교
+              </option>
+
+              <option value="연세대학교">
+                연세대학교
+              </option>
+
+              <option value="고려대학교">
+                고려대학교
+              </option>
+
+              <option value="서강대학교">
+                서강대학교
+              </option>
+            </select>
           </div>
+
           {school && (
-            <span className="bg-primary-light text-gray-900 text-xs px-3 py-1 rounded-full font-sans">{school}</span>
+            <span className="inline-flex items-center justify-center bg-gray-50 rounded-[18px] w-auto px-4 h-[35px]">
+              <p className="text-[10.86px] font-bold text-center text-gray-900 font-sans">
+                {school}
+              </p>
+            </span>
           )}
         </div>
-      </div>
 
-      <div className="fixed bottom-0 left-0 right-0 flex justify-center z-50">
-        <div className="w-full max-w-[393px] px-6 pb-8 pt-4 bg-white">
-          <Button onClick={handleSubmit}>업로드</Button>
+        {/* 하단 업로드 버튼 */}
+
+        <div className="fixed bottom-0 left-0 right-0 flex justify-center z-50">
+
+          <div className="w-full max-w-[393px] px-6 pb-8 pt-4 bg-white">
+
+            <Button onClick={handleSubmit}>
+              업로드
+            </Button>
+
+          </div>
+
         </div>
       </div>
     </div>

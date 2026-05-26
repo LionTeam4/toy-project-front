@@ -38,7 +38,7 @@ const Router = () => {
           <Route path="/community/:id" element={
             <ProtectedRoute><Postpage /></ProtectedRoute>
           } />
-          <Route path="/community/:id/edit" element={
+          <Route path="/community/edit/:id" element={
             <ProtectedRoute><PostEditPage /></ProtectedRoute>
           } />
           <Route path="/mypage" element={
