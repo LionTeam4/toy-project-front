@@ -74,6 +74,7 @@ export default function FestivalDetailPage() {
       </div>
 
       {/* 포스터 이미지 */}
+      {/* 백엔드 이미지 업로드 수정 필요! */}
       <div className="relative w-full h-[280px]">
         {festival.poster
           ? <img
