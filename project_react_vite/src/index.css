@@ -1,40 +1,53 @@
+@import "tailwindcss";
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap');
+
+@font-face {
+  font-family: 'Inter';
+  src:url('/src/assets/Inter.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'A2Z';
+  src: url('/src/assets/A2Z.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@theme {
+  /* Main & Semantic Color */
+  --color-primary-light: #BDFFD9;
+  --color-primary: #33FE88;
+  --color-gradient-warm: linear-gradient(90deg, #FFF6F 0%, #33FE88 100%);
+  --color-gradient-cool: linear-gradient(90deg, #00F6F2 0%, #33FE88 100%);
+  --color-gradient-soft: linear-gradient(81.5deg, #54F7FC 19.73%, #FFFFFF 67.46%, #D7CBFF 119%);
+  
+  /* GrayScale */
+  --color-gray-50: #F6F6F6;
+  --color-gray-100: #F0F0F0;
+  --color-gray-200: #E0E0E0;
+  --color-gray-400: #A8A8A8;
+  --color-gray-600: #606060;
+  --color-gray-700: #4B4B4B;
+  --color-gray-900: #191919;
+
+  /* 폰트 */
+  --font-sans: 'Pretendard', Arial, sans-serif;
+  --font-inter: 'Inter', sans-serif;
+  --font-a2z: 'A2Z', sans-serif;
+ 
+
+  /* 보더 라디우스 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
 body {
   margin: 0;
-  background-color: #f5f5f5;
-  font-family: Arial, sans-serif;
-}
-
-.container {
-  padding: 20px;
-}
-
-.spacing {
-  margin-bottom: 12px;
-}
-
-.input, .textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-
-.button {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  background-color: #4f46e5;
-  color: white;
-  cursor: pointer;
-}
-
-.card {
-  padding: 16px;
-  border-radius: 12px;
-  background-color: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.title {
-  margin-bottom: 16px;
+  background-color: #F6F6F6;
+  font-family: 'Pretendard', Arial, sans-serif;
+  color: #191919;
 }

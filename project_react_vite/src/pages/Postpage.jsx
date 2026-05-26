@@ -1,138 +1,433 @@
-// ── PostDetailPage ────────────────────────────────────────────
-// 와이어프레임 6.2 소통 게시물 상세
-// - 제목 / 학교 / 작성자 / 날짜
-// - 이미지 (있는 경우)
-// - 본문 내용
-// - 좋아요 버튼
-// - 본인 글: 수정 / 삭제 버튼
-
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../components/Button';
-import Input from '../components/Input';
-import TextArea from '../components/TextArea';
 import useAuth from '../hooks/useAuth';
+import useToastStore from '../store/useToastStore'
+import useDialogStore from '../store/useDialogStore';
+import profile from '../assets/profile.svg'
+import { getCommunityDetail, createComment, createCommunityPost, updateCommunityPost, deleteCommunityPost } from '../apis/community';
 
-const DUMMY_POSTS = {
-  1: {
-    id: 1,
-    title: '이화 대동제 같이 갈 사람!',
-    school: '이화여자대학교',
-    author: '유저A',
-    content: '5월 14일 이화여대 대동제 같이 갈 분 구해요! 라인업도 좋고 분위기도 최고일 것 같아서요.',
-    imageUrl: null,
-    likes: 30,
-    createdAt: '2026-04-01',
-  },
-};
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
-// ── 메인 컴포넌트 (파일의 대표) ────────────────────
-const Postpage = () => {
-  const { id } = useParams();
-  
-  // URL에 id가 있으면 '상세보기', 없으면 '글쓰기' 등을 보여주도록 분기 처리를 하거나
-  // 현재 구조상 이 파일은 "상세보기" 역할을 주로 수행하므로 PostDetailPage를 반환합니다.
-  return <PostDetailPage />;
-};
+const Postpage = () => <PostDetailPage />;
 
 // ── PostDetailPage ────────────────────────────────────────────
 export function PostDetailPage() {
   const { id }   = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showDialog } = useDialogStore();
+  const { showToast } = useToastStore();
 
-  const [post, setPost]       = useState(null);
+  const [post, setPost]           = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [likes, setLikes]     = useState(0);
-  const [liked, setLiked]     = useState(false);
+  const [comment, setComment]     = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);  
 
   useEffect(() => {
-    const data = DUMMY_POSTS[Number(id)] ?? null;
-    setPost(data);
-    if (data) setLikes(data.likes);
-    setIsLoading(false);
+    const fetchPost = async () => {
+      try {
+        const response = await getCommunityDetail(id)
+        console.log('API 성공', response.data)
+        setPost(response.data)
+      } catch (error) {
+        console.error('API 실패', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchPost()
   }, [id]);
 
-  const handleLike = () => {
-    setLiked((prev) => !prev);
-    setLikes((prev) => liked ? prev - 1 : prev + 1);
-  };
-
   const handleDelete = () => {
-    if (!window.confirm('정말 삭제하시겠습니까?')) return;
-    navigate('/community');
+    showDialog(
+      '게시글 삭제',
+      '정말 삭제하시겠습니까?',
+      async () => {
+        try {
+          await deleteCommunityPost(id)
+          console.log('게시글 삭제 성공')
+          showToast('게시글이 삭제되었습니다.', 'success')
+          navigate('/community')
+        }
+        
+        catch(error){
+          console.error('게시글 삭제 실패', error)
+          console.log(error.response?.data)
+          showToast('게시글 삭제 실패', 'error')
+        }
+      },
+      () => {}
+    )
   };
 
-  if (isLoading) return <p>불러오는 중...</p>;
-  if (!post)     return <p>게시글을 찾을 수 없습니다.</p>;
+  const handleCommentSubmit = async () => {
+    if (!comment.trim()) return
+    try {
+      setIsSubmitting(true)
+      const response = await createComment({
+        post: Number(id),
+        contents: comment,
+      })
+      console.log('댓글 작성 성공')
+      console.log(response.data)
+      
+      setPost((prev) => ({
+        ...prev,
+        comments: [...(prev.comments || []), response.data],
+      }))
 
-  const isAuthor = user?.nickname === post.author;
+      showToast('댓글이 등록되었습니다!', 'success')
+      setComment('')
+
+    } catch (error) {
+      console.error('댓글 작성 실패', error)
+      console.log(error.response?.data)
+
+      showToast('댓글 등록에 실패했습니다.', 'error')
+      
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (isLoading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-gray-400 text-sm font-sans">불러오는 중...</p>
+    </div>
+  );
+  if (!post) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-gray-400 text-sm font-sans">게시글을 찾을 수 없습니다.</p>
+    </div>
+  );
 
   return (
-    <div>
-      <Button onClick={() => navigate(-1)}>← 뒤로</Button>
-      <div>
-        <p>{post.school}</p>
-        <h1>{post.title}</h1>
-        <p>{post.author} · {post.createdAt}</p>
-      </div>
-      {post.imageUrl && <img src={post.imageUrl} alt="게시글 이미지" />}
-      <p>{post.content}</p>
-      <Button onClick={handleLike}>
-        {liked ? '♥' : '♡'} {likes}
-      </Button>
-      {isAuthor && (
-        <div>
-          <Button onClick={() => navigate(`/community/${id}/edit`)}>수정</Button>
-          <Button onClick={handleDelete}>삭제</Button>
+    <div className="bg-white min-h-screen pb-20">
+
+      {/* 상단 헤더 */}
+      <div className="bg-white flex items-center justify-between px-[34px] h-[82px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)]">
+
+        <button
+          onClick={() => navigate(-1)}
+          className="cursor-pointer"
+        >
+          <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+            <path
+              d="M6 1L1 6L6 11"
+              stroke="#000000"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+
+        <p className="text-[13.58px] font-bold text-gray-900 leading-[136%] tracking-[-0.01em] font-sans">
+          소통
+        </p>
+
+        <div className="relative">
+
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="cursor-pointer text-gray-900 font-bold"
+          >
+            ⋮
+          </button>
+
+          {showMenu && (
+
+            <div className="absolute right-0 top-8 bg-white rounded-xl shadow-lg border w-[120px] overflow-hidden z-50">
+
+              <button
+                onClick={() => {
+                  navigate(`/community/edit/${id}`)
+                }}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50"
+              >
+                수정하기
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowMenu(false)
+                  handleDelete()
+                }}
+                className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-50"
+              >
+                삭제하기
+              </button>
+
+            </div>
+
+          )}
+
+        </div>
+
+</div>
+
+      {/* 이미지 영역 */}
+      {post.image && (
+        <div className="w-[393px] h-[300px] overflow-hidden rounded-b-[18px]">
+          <img
+            src={`${BASE_URL}${post.image}`}
+            alt="게시글 이미지"
+            className="w-full h-full object-cover object-bottom"
+          />
         </div>
       )}
+
+      <div className="px-[34px] pt-4">
+
+        {/* 소통 태그 */}
+        <div className="mb-2">
+          <span className="inline-flex items-center justify-center w-[49px] h-[29px] rounded-[10.86px] bg-primary/30 text-white text-[10.86px] font-bold leading-[136%] tracking-[-0.01em] font-sans">
+            소통
+          </span>
+        </div>
+
+        {/* 제목 */}
+        <h1 className="text-gray-900 text-[21.2px] font-bold leading-[136%] tracking-[-0.01em] mb-1 font-sans">
+          {post.title}
+        </h1>
+
+        {/* 날짜 */}
+        <p className="text-[13px] font-normal leading-[136%] tracking-[-0.01em] text-black/50 mb-4 font-sans">
+          {post.created?.slice(0, 10)} 작성
+        </p>
+
+        {/* 학교 태그 */}
+        <div className="mb-4">
+          <span className="border border-gray-900 text-gray-900 text-xs px-3 py-1.5 rounded-full font-sans">
+            {post.school}
+          </span>
+        </div>
+
+        {/* 본문 */}
+        <p className="text-gray-900 text-[13px] font-normal leading-[136%] tracking-[-0.01em] mb-6 font-sans">
+          {post.contents}
+        </p>
+
+        {/* 댓글 */}
+        {post.comments?.map((comment) => (
+          <div
+            key={comment.id}
+            className="flex items-start gap-3 mb-6"
+          >
+            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+              <img
+                src={profile}
+                alt="프로필"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-900 mt-0.5 font-sans">
+                {comment.contents}
+              </p>
+
+              <p className="text-xs text-gray-400 mt-1">
+                {comment.created?.slice(0,10)}
+              </p>
+            </div>
+          </div>
+        ))}
+
+      </div>
+
+      {/* 댓글 입력창 — 하단 고정 */}
+      <div className="fixed bottom-0 left-0 right-0 flex justify-center z-50">
+        <div className="w-full max-w-[393px] bg-white px-[29px] py-3">
+          <div className="flex items-center border border-gray-900 rounded-[20px] px-4 gap-2 w-[335px] h-[55px]">
+            <input
+              placeholder="댓글을 입력하세요"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="flex-1 text-sm outline-none placeholder:text-gray-400 bg-transparent font-sans"
+            />
+            <button
+              onClick={handleCommentSubmit}
+              disabled={isSubmitting}
+              className="cursor-pointer flex-shrink-0"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="21" height="22" viewBox="0 0 21 22" fill="none">
+                <path d="M1.27173 5.82764L10.4959 10.8063" stroke="black" strokeWidth="1.4" strokeLinecap="round"/>
+                <path d="M20.3054 1.073L15.7139 20.6525" stroke="black" strokeWidth="1.4" strokeLinecap="round"/>
+                <path d="M0.700195 5.64868L19.6696 0.700135" stroke="black" strokeWidth="1.4" strokeLinecap="round"/>
+                <path d="M10.7507 10.6284L15.3017 20.3445" stroke="black" strokeWidth="1.4" strokeLinecap="round"/>
+                <path d="M10.7507 10.628L19.5684 1.07352" stroke="black" strokeWidth="1.4" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
 
 // ── PostNewPage ───────────────────────────────────────────────
 export function PostNewPage() {
-  const navigate = useNavigate();
-  const [title, setTitle] = useState('');
-  const [school, setSchool] = useState('');
-  const [content, setContent] = useState('');
-  const [imageFile, setImageFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [error, setError] = useState('');
+  const navigate     = useNavigate();
+  const { pathname } = useLocation();
   const fileInputRef = useRef(null);
+  const { showToast } = useToastStore();
+
+  const [type, setType]             = useState(pathname.includes('reviews') ? '후기' : '소통');
+  const [title, setTitle]           = useState('');
+  const [school, setSchool]         = useState('이화여자대학교');
+  const schools = [ '이화여자대학교', '연세대학교', '고려대학교', '서강대학교', ]
+  const [content, setContent]       = useState('');
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [error, setError]           = useState('');
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setImageFile(file);
     setPreviewUrl(URL.createObjectURL(file));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+
     if (!title.trim() || !content.trim()) {
-      setError('제목과 내용을 입력해주세요.');
-      return;
+      setError('제목과 내용을 입력해주세요.')
+      return
     }
-    // 게시물 등록 로직(과제용 시뮬레이션)
-    console.log("등록될 데이터:", { title, school, content });
-    alert('게시글이 성공적으로 등록되었습니다!')
-    
-    navigate('/community');
-  };
+
+    try {
+
+      const response = await createCommunityPost({
+        title,
+        school,
+        contents: content,
+      })
+
+      console.log('게시글 작성 성공')
+      console.log(response.data)
+
+      showToast('게시글이 등록되었습니다!', 'success')
+
+      navigate('/community')
+
+    }
+
+    catch(error){
+
+      console.error('게시글 작성 실패', error)
+      console.log(error.response?.data)
+
+      showToast('게시글 등록 실패', 'error')
+    }
+  }
+
+  const today = new Date().toLocaleDateString('ko-KR', {
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).replace(/\. /g, '.').replace('.', '')
 
   return (
-    <div>
-      <h1>글쓰기</h1>
-      <Input placeholder="제목" value={title} onChange={(e) => setTitle(e.target.value)} />
-      <Input placeholder="학교 이름" value={school} onChange={(e) => setSchool(e.target.value)} />
-      <TextArea placeholder="내용을 입력해주세요" value={content} onChange={(e) => setContent(e.target.value)} />
-      <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageChange} />
-      <Button onClick={() => fileInputRef.current.click()}>사진 첨부</Button>
-      {previewUrl && <img src={previewUrl} alt="미리보기" width={200} />}
-      {error && <p>{error}</p>}
-      <Button onClick={() => navigate(-1)}>취소</Button>
-      <Button onClick={handleSubmit}>등록</Button>
+    <div className="bg-white min-h-screen pb-24">
+
+      {/* 상단 헤더 */}
+      <div className="px-[34px] pt-6 pb-4">
+        <button onClick={() => navigate(-1)} className="cursor-pointer mb-4">
+          <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+            <path d="M6 1L1 6L6 11" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          className="text-[13px] font-medium text-gray-900 outline-none cursor-pointer bg-white rounded-[18px] px-3 leading-[136%] tracking-[-0.01em] block w-[58px] h-[29px] border border-gray-900 font-sans"
+        >
+          <option value="소통">소통</option>
+          <option value="후기">후기</option>
+        </select>
+      </div>
+
+      <div className="px-[34px] flex flex-col gap-4">
+
+        <input
+          placeholder="제목 작성하기"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="text-[21.2px] font-bold text-gray-900 outline-none placeholder:text-gray-900 w-full font-sans"
+        />
+
+        <p className="text-[13px] font-normal text-black/50 -mt-2 font-sans">{today}</p>
+
+        <div className="border-t border-gray-100" />
+
+        <div className="flex gap-2 items-start">
+          <textarea
+            placeholder="ㅣ 클릭해서 작성하기"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="flex-1 text-[12px] font-normal leading-[136%] tracking-[-0.01em] text-gray-900 outline-none placeholder:text-gray-900 resize-none min-h-[200px] w-full font-sans"
+          />
+        </div>
+
+        <div>
+          <p className="text-[14px] font-bold leading-[136%] tracking-[-0.01em] text-gray-900 mb-2 font-sans">
+            학교 선택
+          </p>
+
+          <select
+            value={school}
+            onChange={(e)=>setSchool(e.target.value)}
+            className="w-full h-[45px] border border-gray-300 rounded-[12px] px-4 text-sm outline-none font-sans"
+          >
+
+            {schools.map((s)=>(
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+
+          </select>
+        </div>
+
+        {type === '소통' && (
+          <div>
+            <p className="text-[14px] font-bold leading-[136%] tracking-[-0.01em] text-gray-900 mb-2 font-sans">이미지 추가</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+            {previewUrl
+              ? <img src={previewUrl} alt="미리보기" className="w-[118px] h-[118px] rounded-[10.86px] object-cover" />
+              : <button
+                  onClick={() => fileInputRef.current.click()}
+                  className="w-[118px] h-[118px] rounded-[10.86px] flex items-center justify-center cursor-pointer border border-gray-900"
+                >
+                  <span className="text-[28px] font-bold leading-[136%] tracking-[-0.01em] text-center text-gray-900">
+                    +
+                  </span>
+                </button>
+            }
+          </div>
+        )}
+
+        {error && <p className="text-red-400 text-xs font-sans">{error}</p>}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 flex justify-center z-50">
+        <div className="w-full max-w-[393px] px-[38px] pb-8 pt-4 bg-white">
+          <button
+            onClick={handleSubmit}
+            className="w-[318px] h-[56px] rounded-[20px] bg-primary cursor-pointer"
+          >
+            <span className="text-[15px] font-semibold leading-[136%] tracking-[-0.01em] text-center text-gray-900 font-sans">
+              업로드
+            </span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -141,30 +436,145 @@ export function PostNewPage() {
 export function PostEditPage() {
   const { id }   = useParams();
   const navigate = useNavigate();
-  const [title, setTitle] = useState('');
-  const [school, setSchool] = useState('');
+  const { showToast } = useToastStore();
+
+  const [type, setType]       = useState('소통');
+  const [title, setTitle]     = useState('');
+  const [school, setSchool]   = useState('');
   const [content, setContent] = useState('');
 
   useEffect(() => {
-    const post = DUMMY_POSTS[Number(id)];
-    if (post) {
-      setTitle(post.title);
-      setSchool(post.school);
-      setContent(post.content);
+    const fetchPost = async () => {
+      try {
+        const response = await getCommunityDetail(id)
+        const post = response.data
+        setTitle(post.title)
+        setSchool(post.school)
+        setContent(post.contents)
+        setType('소통')
+      } catch (error) {
+        console.error('API 실패', error)
+      }
     }
+    fetchPost()
   }, [id]);
 
+  const handleSubmit = async () => {
+
+    try {
+
+      const response = await updateCommunityPost(id,{
+        title,
+        school,
+        contents: content,
+      })
+
+      console.log('게시글 수정 성공')
+      console.log(response.data)
+
+      showToast('게시글이 수정되었습니다!','success')
+
+      navigate(`/community/`)
+
+    }
+
+    catch(error){
+
+      console.error('게시글 수정 실패',error)
+      console.log(error.response?.data)
+
+      showToast('게시글 수정 실패','error')
+
+    }
+
+  }
+
   return (
-    <div>
-      <h1>게시글 수정</h1>
-      <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-      <Input value={school} onChange={(e) => setSchool(e.target.value)} />
-      <TextArea value={content} onChange={(e) => setContent(e.target.value)} />
-      <Button onClick={() => navigate(-1)}>취소</Button>
-      <Button onClick={() => navigate(`/community/${id}`)}>수정 완료</Button>
+    <div className="bg-white min-h-screen">
+      <div className="px-[34px] h-[82px] flex items-center justify-between border-b border-gray-100">
+        <button onClick={() => navigate(-1)} className="cursor-pointer">
+          <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+            <path d="M6 1L1 6L6 11" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          className="text-[13.58px] font-bold text-gray-900 outline-none cursor-pointer bg-white border border-gray-200 rounded-full px-3 py-1 leading-[136%] tracking-[-0.01em] font-sans"
+        >
+          <option value="소통">소통</option>
+          <option value="후기">후기</option>
+        </select>
+        <div className="w-[7px]" />
+      </div>
+
+      <div className="px-[34px] pt-5 flex flex-col gap-5">
+        <input
+          placeholder="제목"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="text-[21.2px] font-bold text-gray-900 outline-none border-b border-gray-100 pb-3 w-full leading-[136%] tracking-[-0.01em] font-sans"
+        />
+        <textarea
+          placeholder="내용"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="text-[13px] font-normal text-gray-600 outline-none resize-none min-h-[120px] w-full leading-[136%] tracking-[-0.01em] font-sans"
+        />
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-[14px] font-bold leading-[136%] tracking-[-0.01em] text-gray-900 font-sans">
+              학교 선택
+            </p>
+
+            <select
+              value={school}
+              onChange={(e) => setSchool(e.target.value)}
+              className="border rounded-lg px-3 py-1 text-sm"
+            >
+              <option value="이화여자대학교">
+                이화여자대학교
+              </option>
+
+              <option value="연세대학교">
+                연세대학교
+              </option>
+
+              <option value="고려대학교">
+                고려대학교
+              </option>
+
+              <option value="서강대학교">
+                서강대학교
+              </option>
+            </select>
+          </div>
+
+          {school && (
+            <span className="inline-flex items-center justify-center bg-gray-50 rounded-[18px] w-auto px-4 h-[35px]">
+              <p className="text-[10.86px] font-bold text-center text-gray-900 font-sans">
+                {school}
+              </p>
+            </span>
+          )}
+        </div>
+
+        {/* 하단 업로드 버튼 */}
+
+        <div className="fixed bottom-0 left-0 right-0 flex justify-center z-50">
+
+          <div className="w-full max-w-[393px] px-6 pb-8 pt-4 bg-white">
+
+            <Button onClick={handleSubmit}>
+              업로드
+            </Button>
+
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }
 
-// ⭐ 마지막에 파일의 대표인 Postpage를 내보냅니다.
 export default Postpage;

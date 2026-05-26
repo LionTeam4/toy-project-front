@@ -1,45 +1,15 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import Input from '../components/Input'
-import Button from '../components/Button'
-
-// 와이어프레임 1.회원가입
-// step 1 (1.1): 이메일 / 비밀번호 입력
-// step 2 (1.2): 닉네임 / 학교 입력
-// step 3 (1.3): 관심 축제 지역 선택 (온보딩 첫 단계)
-// → 완료 후 /onboarding/interests 대신 바로 메인으로 이동
-//   (관심 선택을 회원가입 내에서 처리하는 와이어프레임 구조)
-
-const REGIONS = ['서울', '경기', '인천', '부산', '대구', '광주', '대전']
+import { useNavigate } from 'react-router-dom'
 
 export default function SignupPage() {
   const navigate = useNavigate()
 
-  const [step, setStep] = useState(1)
-
-  // step 1
-  const [email, setEmail]                   = useState('')
-  const [password, setPassword]             = useState('')
+  const [email, setEmail]                     = useState('')
+  const [password, setPassword]               = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [error, setError]                     = useState('')
 
-  // step 2
-  const [nickname, setNickname] = useState('')
-  const [school, setSchool]     = useState('')
-
-  // step 3 — 관심 지역 다중 선택
-  const [selectedRegions, setSelectedRegions] = useState([])
-
-  const [error, setError] = useState('')
-
-  const toggleRegion = (region) => {
-    setSelectedRegions((prev) =>
-      prev.includes(region)
-        ? prev.filter((r) => r !== region)
-        : [...prev, region]
-    )
-  }
-
-  const handleStep1Next = () => {
+  const handleNext = () => {
     if (!email || !password || !passwordConfirm) {
       setError('모든 항목을 입력해주세요.')
       return
@@ -49,100 +19,78 @@ export default function SignupPage() {
       return
     }
     setError('')
-    setStep(2)
-  }
-
-  const handleStep2Next = () => {
-    if (!nickname || !school) {
-      setError('닉네임과 학교를 입력해주세요.')
-      return
-    }
-    setError('')
-    setStep(3)
-  }
-
-  const handleSubmit = () => {
-    if (selectedRegions.length === 0) {
-      setError('관심 지역을 1개 이상 선택해주세요.')
-      return
-    }
-    setError('')
-    // TODO: 회원가입 API 호출
-    console.log({ email, password, nickname, school, selectedRegions })
-    navigate('/')
+    navigate('/signup/profile', {
+      state:{
+        username: email,
+        password,
+      }
+    })
   }
 
   return (
-    <div>
-      <h1>회원가입</h1>
+    <div className="bg-gray-200 min-h-screen flex justify-center">
+      <div className="w-full max-w-[393px] bg-white min-h-screen flex flex-col px-[38px] pt-[66px]">
 
-      {/* step 1: 계정 정보 */}
-      {step === 1 && (
-        <div>
-          <h2>계정 정보</h2>
-          <Input
-            type="email"
-            placeholder="이메일"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+        <div className="mb-[81px]">
+          <h2 className="text-[25px] font-bold text-gray-900 leading-[136%] font-sans">
+            반가워요!<br />회원가입을 진행해볼까요?
+          </h2>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <input
+            placeholder="이름"
+            className="w-[318px] h-[55px] rounded-[20px] bg-gray-50 px-4 text-sm text-gray-900 placeholder:text-gray-400 outline-none font-sans"
           />
-          <Input
+          <div className="w-[318px] h-[55px] rounded-[20px] bg-gray-50 px-4 flex items-center gap-2">
+            <input
+              placeholder="아이디"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 text-sm text-gray-900 placeholder:text-gray-400 outline-none bg-transparent font-sans"
+            />
+            <button className="text-gray-900 text-[15px] font-semibold leading-[136%] tracking-[-0.01em] flex-shrink-0 cursor-pointer font-sans">
+              중복확인
+            </button>
+          </div>
+          <p className="text-[13px] font-semibold leading-[136%] tracking-[-0.01em] text-black/60 font-sans">
+            6~12자 영문, 숫자로 입력해주세요
+          </p>
+          <input
             type="password"
             placeholder="비밀번호"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="w-[318px] h-[55px] rounded-[20px] bg-gray-50 px-4 text-sm text-gray-900 placeholder:text-gray-400 outline-none font-sans"
           />
-          <Input
+          <input
             type="password"
-            placeholder="비밀번호 확인"
+            placeholder="비밀번호확인"
             value={passwordConfirm}
             onChange={(e) => setPasswordConfirm(e.target.value)}
+            className="w-[318px] h-[55px] rounded-[20px] bg-gray-50 px-4 text-sm text-gray-900 placeholder:text-gray-400 outline-none font-sans"
           />
-          {error && <p>{error}</p>}
-          <Button onClick={handleStep1Next}>다음</Button>
-          <p>
-            이미 계정이 있으신가요? <Link to="/login">로그인</Link>
+          <p className="text-[13px] font-semibold leading-[136%] tracking-[-0.01em] text-black/60 font-sans">
+            비밀번호는 영문 대소문자, 숫자, 특수문자(!,@#$%)를 혼합하여 8~20자로 입력해주세요
           </p>
+          {error && <p className="text-red-400 text-xs font-sans">{error}</p>}
         </div>
-      )}
 
-      {/* step 2: 프로필 정보 (와이어프레임 1.2)*/}
-      {step === 2 && (
-        <div>
-          <h2>프로필 정보</h2>
-          <Input
-            placeholder="닉네임"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-          />
-          <Input
-            placeholder="학교 이름"
-            value={school}
-            onChange={(e) => setSchool(e.target.value)}
-          />
-          {error && <p>{error}</p>}
-          <Button onClick={() => { setError(''); setStep(1) }}>이전</Button>
-          <Button onClick={handleStep2Next}>다음</Button>
-        </div>
-      )}
-
-      {/* step 3: 관심 지역 선택 (와이어프레임 1.3) */}
-      {step === 3 && (
-        <div>
-          <h2>관심 축제 지역 선택</h2>
-          <p>관심 있는 지역을 선택해주세요</p>
-          <div>
-            {REGIONS.map((region) => (
-              <Button key={region} onClick={() => toggleRegion(region)}>
-                {selectedRegions.includes(region) ? `✓ ${region}` : region}
-              </Button>
-            ))}
+        {/* 다음 버튼 — 하단 고정 */}
+        <div className="fixed bottom-0 left-0 right-0 flex justify-center z-50">
+          <div className="w-full max-w-[393px] px-[38px] pb-8 pt-4 bg-white">
+            <button
+              onClick={handleNext}
+              className="w-[318px] h-[56px] rounded-[20px] bg-primary cursor-pointer"
+            >
+              <span className="text-[15px] font-semibold leading-[136%] text-center text-gray-900 font-sans">
+                다음
+              </span>
+            </button>
           </div>
-          {error && <p>{error}</p>}
-          <Button onClick={() => { setError(''); setStep(2) }}>이전</Button>
-          <Button onClick={handleSubmit}>가입 완료</Button>
         </div>
-      )}
+
+      </div>
     </div>
   )
 }

@@ -1,8 +1,7 @@
-import { useContext } from 'react'
-import { AuthContext } from '../contexts/AuthContext'
+import useAuthStore from '../store/useAuthStore'
 
 export default function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth must be used within AuthProvider')
-  return context
-} 
+  const { user, login, logout } = useAuthStore()
+  const isLoggedIn = !!user
+  return { user, login, logout, isLoggedIn }
+}

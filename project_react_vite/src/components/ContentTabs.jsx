@@ -11,15 +11,16 @@ export default function ContentTabs() {
   const { pathname } = useLocation()
 
   return (
-    <div>
+    <div className="flex items-center gap-[0px]">
       {TOGGLES.map(({ label, path }) => {
         const isActive = pathname.startsWith(path)
         return (
           <button
             key={path}
             onClick={() => navigate(path)}
-            style={{ fontWeight: isActive ? 'bold' : 'normal' }}
-            aria-pressed={isActive}
+            className={`cursor-pointer text-center leading-[136%] h-[17px] text-[13.578px] font-bold tracking-[-0.01em] font-sans px-5 ${
+              isActive ? 'text-primary' : 'text-gray-900'
+            }`}
           >
             {label}
           </button>
