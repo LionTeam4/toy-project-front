@@ -54,10 +54,18 @@ export default function HomePage() {
       try {
         const response = await getFestivalList()
         console.log("API 성공", response.data)
-        setFestivals(response.data)
+        
+        // API 응답이 배열이거나 results 속성을 가진 객체인 경우 처리
+        const festivalData = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data?.results || [])
+        
+        console.log('처리된 festivalData:', festivalData)
+        setFestivals(festivalData)
         setReviews(REVIEW_SETS[0])
       } catch (error) {
         console.error("API 실패", error)
+        setFestivals([])
       } finally {
         setIsLoading(false)
       }

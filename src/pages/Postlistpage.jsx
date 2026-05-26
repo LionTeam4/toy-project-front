@@ -15,9 +15,17 @@ export default function PostListPage() {
       try {
         const response = await getPostList()
         console.log('API 성공', response.data)
-        setPosts(response.data)
+        
+        // API 응답이 배열이거나 results 속성을 가진 객체인 경우 처리
+        const postData = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data?.results || [])
+        
+        console.log('처리된 postData:', postData)
+        setPosts(postData)
       } catch (error) {
         console.error('API 실패', error)
+        setPosts([])
       } finally {
         setIsLoading(false)
       }
