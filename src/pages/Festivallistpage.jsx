@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import FestivalCard from '../components/FestivalCard'
 import { getFestivalList } from '../apis/festival'
 
@@ -8,32 +8,17 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL
 export default function FestivalListPage() {
   const navigate = useNavigate()
 
-  const [festivals, setFestivals] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { data, isLoading } = useQuery({
+    queryKey: ['festivals'],
+    queryFn: async () => {
+      const response = await getFestivalList()
+      return Array.isArray(response.data)
+        ? response.data
+        : (response.data?.results || [])
+    },
+  })
 
-  useEffect(() => {
-    const fetchFestivals = async () => {
-      try {
-        const response = await getFestivalList()
-        console.log('API 성공', response.data)
-        
-        // API 응답이 배열이거나 results 속성을 가진 객체인 경우 처리
-        const festivalData = Array.isArray(response.data) 
-          ? response.data 
-          : (response.data?.results || [])
-        
-        console.log('처리된 festivalData:', festivalData)
-        setFestivals(festivalData)
-      } catch (error) {
-        console.error('API 실패', error)
-        setFestivals([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchFestivals()
-  }, [])
+  const festivals = data ?? []
 
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-screen">

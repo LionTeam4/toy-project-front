@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import ewha_logo from '../assets/ewha_logo.svg'
 import useToastStore from '../store/useToastStore'
 import { getFestivalDetail } from "../apis/festival"
@@ -11,25 +12,15 @@ export default function FestivalDetailPage() {
   const navigate = useNavigate()
   const { showToast } = useToastStore()
 
-  const [festival, setFestival]         = useState(null)
-  const [isLoading, setIsLoading]       = useState(true)
-  const [bookmarked, setBookmarked]     = useState(false)
+  const [bookmarked, setBookmarked] = useState(false)
 
-  useEffect(() => {
-    const fetchFestivalDetail = async () => {
-      try {
-        const response = await getFestivalDetail(id)
-        console.log('API 성공', response.data)
-        setFestival(response.data)
-      } catch (error) {
-        console.error('API 실패', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchFestivalDetail()
-  }, [id])
+  const { data: festival, isLoading } = useQuery({
+    queryKey: ['festival', id],
+    queryFn: async () => {
+      const response = await getFestivalDetail(id)
+      return response.data
+    },
+  })
 
   const handleBookmark = () => {
     setBookmarked((prev) => {
@@ -53,7 +44,6 @@ export default function FestivalDetailPage() {
     </div>
   )
 
-  // 날짜 포맷 변환 (2026-05-20 → 2026년 05월 20일)
   const formatDate = (dateStr) => {
     if (!dateStr) return ''
     const [year, month, day] = dateStr.split('-')
@@ -74,7 +64,6 @@ export default function FestivalDetailPage() {
       </div>
 
       {/* 포스터 이미지 */}
-      {/* 백엔드 이미지 업로드 수정 필요! */}
       <div className="relative w-full h-[280px]">
         {festival.poster
           ? <img
@@ -117,11 +106,7 @@ export default function FestivalDetailPage() {
         {/* 학교 로고 + 주소 */}
         <div className="flex items-center gap-[17px] mt-[30.71px]">
           <div className="w-[52px] h-[52px] rounded-full overflow-hidden bg-gray-200 shrink-0">
-            <img
-              src={ewha_logo}
-              alt="학교 로고"
-              className="w-full h-full object-cover"
-            />
+            <img src={ewha_logo} alt="학교 로고" className="w-full h-full object-cover" />
           </div>
           <p className="text-[12px] font-normal leading-[136%] tracking-[-0.01em] text-black/60 font-sans max-w-[140px]">
             {festival.fes_location}

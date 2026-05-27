@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import useAuth from '../hooks/useAuth'
 import ContentTabs from '../components/ContentTabs'
 import ewha_logo from '../assets/ewha_logo.svg'
@@ -44,35 +45,20 @@ export default function HomePage() {
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  const [festivals, setFestivals]       = useState([])
-  const [reviews, setReviews]           = useState([])
   const [reviewSetIdx, setReviewSetIdx] = useState(0)
-  const [isLoading, setIsLoading]       = useState(true)
+  const [reviews, setReviews] = useState(REVIEW_SETS[0])
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await getFestivalList()
-        console.log("API 성공", response.data)
-        
-        // API 응답이 배열이거나 results 속성을 가진 객체인 경우 처리
-        const festivalData = Array.isArray(response.data) 
-          ? response.data 
-          : (response.data?.results || [])
-        
-        console.log('처리된 festivalData:', festivalData)
-        setFestivals(festivalData)
-        setReviews(REVIEW_SETS[0])
-      } catch (error) {
-        console.error("API 실패", error)
-        setFestivals([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
+  const { data, isLoading } = useQuery({
+    queryKey: ['festivals'],
+    queryFn: async () => {
+      const response = await getFestivalList()
+      return Array.isArray(response.data)
+        ? response.data
+        : (response.data?.results || [])
+    },
+  })
 
-    fetchData()
-  }, [])
+  const festivals = data ?? []
 
   const handleRefreshReviews = () => {
     const nextIdx = (reviewSetIdx + 1) % REVIEW_SETS.length
@@ -118,11 +104,10 @@ export default function HomePage() {
           <div
             key={festival.id}
             onClick={() => navigate(`/festivals/${festival.id}`)}
-            className={`flex-shrink-0 cursor-pointer rounded-[11px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] overflow-hidden w-[152px] h-[214px] min-w-[152px] ${
+            className={`relative flex-shrink-0 cursor-pointer rounded-[11px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] overflow-hidden w-[152px] h-[214px] min-w-[152px] ${
               i % 2 === 0 ? 'mt-11' : 'mb-11'
             }`}
           >
-            {/* 백엔드 이미지 수정필요! */}
             {festival.poster
               ? <img
                   src={`${import.meta.env.VITE_API_BASE_URL}${festival.poster}`}
@@ -133,12 +118,13 @@ export default function HomePage() {
                   <p className="text-gray-900 font-bold text-sm text-center px-3 font-sans">{festival.school}</p>
                 </div>
             }
+            <div className="absolute bottom-0 left-0 right-0 h-[63px] rounded-b-[11px] bg-gradient-to-t from-primary/70 to-transparent" />
           </div>
         ))}
       </div>
 
       {/* 추천 후기 */}
-      <div className="absolute top-[544px] left-[28px] right-[291px]">
+      <div className="absolute top-[580px] left-[28px] right-[291px]">
         <h2
           onClick={handleRefreshReviews}
           className="text-[20px] font-bold text-gray-900 leading-[136%] cursor-pointer whitespace-nowrap font-sans"

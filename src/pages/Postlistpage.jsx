@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import FestivalCard from '../components/FestivalCard'
 import { getPostList } from '../apis/festival'
 
@@ -7,32 +7,18 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 export default function PostListPage() {
   const navigate = useNavigate()
-  const [posts, setPosts] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await getPostList()
-        console.log('API 성공', response.data)
-        
-        // API 응답이 배열이거나 results 속성을 가진 객체인 경우 처리
-        const postData = Array.isArray(response.data) 
-          ? response.data 
-          : (response.data?.results || [])
-        
-        console.log('처리된 postData:', postData)
-        setPosts(postData)
-      } catch (error) {
-        console.error('API 실패', error)
-        setPosts([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
+  const { data, isLoading } = useQuery({
+    queryKey: ['posts'],
+    queryFn: async () => {
+      const response = await getPostList()
+      return Array.isArray(response.data)
+        ? response.data
+        : (response.data?.results || [])
+    },
+  })
 
-    fetchPosts()
-  }, [])
+  const posts = data ?? []
 
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -66,7 +52,10 @@ export default function PostListPage() {
         {posts.map((post, index) => (
           <FestivalCard
             key={post.id}
-            festival={post}
+            festival={{
+              ...post,
+              poster: post.image ? `${BASE_URL}${post.image}` : null,
+            }}
             index={index}
             type="소통"
             titleField="title"
