@@ -1,11 +1,11 @@
 import api from "../api";
 
 export const getFestivalList = () => {
-  return api.get("/festival/");
+  return api.get("/festival");
 };
 
 export const createFestival = (data) => {
-  return api.post("/festival/", data);
+  return api.post("/festival", data);
 };
 
 export const getFestivalDetail = (id) => {

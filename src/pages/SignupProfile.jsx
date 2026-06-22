@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 export default function SignupProfile() {
@@ -7,46 +7,38 @@ export default function SignupProfile() {
 
   const { username, password } = location.state || {}
 
-  const [nickname, setNickname]     = useState('')
-  const [school, setSchool]         = useState('')
-  const [gender, setGender]         = useState('')
-  const [error, setError]           = useState('')
-  const [schoolOpen, setSchoolOpen] = useState(false)
-  const [birthOpen, setBirthOpen]   = useState(false)
-  const [birth, setBirth]           = useState('')
+  const [nickname, setNickname]           = useState('')
+  const [school, setSchool]               = useState('')
+  const [gender, setGender]               = useState('')
+  const [error, setError]                 = useState('')
+  const [birth, setBirth]                 = useState('')
+  const [profilePreview, setProfilePreview] = useState(null)
 
-  const handleNext = () => {
+  const fileInputRef = useRef(null)
 
-    if (!nickname || !school) {
-
-      setError('닉네임과 학교를 입력해주세요.')
-
-      return
-    }
-
-    setError('')
-
-    navigate('/signup/festival', {
-
-      state: {
-
-        username,
-        password,
-
-        nickname,
-
-        myschool: school,
-
-        birth,
-
-        profile: null,
-
-      },
-
-    })
+  const handleProfileChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setProfilePreview(URL.createObjectURL(file))
   }
 
-  const BIRTH_OPTIONS = ['2000-01-01', '2001-01-01', '2002-01-01', '2003-01-01', '2004-01-01', '2000-01-01']
+  const handleNext = () => {
+    if (!nickname || !school) {
+      setError('닉네임과 학교를 입력해주세요.')
+      return
+    }
+    setError('')
+    navigate('/signup/festival', {
+      state: {
+        username,
+        password,
+        nickname,
+        myschool: school,
+        birth,
+        profile: profilePreview,
+      },
+    })
+  }
 
   return (
     <div className="bg-gray-200 min-h-screen flex justify-center">
@@ -54,29 +46,44 @@ export default function SignupProfile() {
 
         {/* 프로필 사진 */}
         <div className="flex justify-center pt-[80px] mb-[50px]">
-          <div className="relative flex items-center justify-center w-[142px] h-[142px]">
-            {/* 그라데이션 테두리 링 */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="142" height="142" viewBox="0 0 142 142" fill="none" className="absolute">
-              <circle cx="71" cy="71" r="68.5" stroke="url(#paint0_linear_108_693)" strokeWidth="5"/>
-              <defs>
-                <linearGradient id="paint0_linear_108_693" x1="58" y1="13.5" x2="142" y2="142" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#33FE88"/>
-                  <stop offset="1" stopColor="white"/>
-                </linearGradient>
-              </defs>
-            </svg>
-            {/* 카메라 아이콘 */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
-              <g transform="translate(8, 0)">
-                <path d="M0 3.07389L2.98606 0H9.91171L13.3745 3.14916L0 3.07389Z" fill="#33FE88"/>
-              </g>
-              <g transform="translate(0, 4)">
-                <path d="M27.6399 0H2.10781C0.943697 0 0 0.943698 0 2.10781V21.0655C0 22.2296 0.943697 23.1733 2.10781 23.1733H27.6399C28.804 23.1733 29.7477 22.2296 29.7477 21.0655V2.10781C29.7477 0.943698 28.804 0 27.6399 0Z" fill="#33FE88"/>
-                <g transform="translate(7.5, 4)">
-                  <path d="M7.38986 13.5251C10.7783 13.5251 13.5251 10.7783 13.5251 7.38986C13.5251 4.00147 10.7783 1.25464 7.38986 1.25464C4.00147 1.25464 1.25464 4.00147 1.25464 7.38986C1.25464 10.7783 4.00147 13.5251 7.38986 13.5251Z" stroke="white" strokeWidth="2.50929" strokeMiterlimit="10"/>
-                </g>
-              </g>
-            </svg>
+          <div
+            className="relative flex items-center justify-center w-[142px] h-[142px] cursor-pointer"
+            onClick={() => fileInputRef.current.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleProfileChange}
+            />
+            {profilePreview
+              ? <img src={profilePreview} alt="프로필 미리보기" className="w-[132px] h-[132px] rounded-full object-cover" />
+              : <>
+                  {/* 그라데이션 테두리 링 */}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="142" height="142" viewBox="0 0 142 142" fill="none" className="absolute">
+                    <circle cx="71" cy="71" r="68.5" stroke="url(#paint0_linear_108_693)" strokeWidth="5"/>
+                    <defs>
+                      <linearGradient id="paint0_linear_108_693" x1="58" y1="13.5" x2="142" y2="142" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#33FE88"/>
+                        <stop offset="1" stopColor="white"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  {/* 카메라 아이콘 */}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
+                    <g transform="translate(8, 0)">
+                      <path d="M0 3.07389L2.98606 0H9.91171L13.3745 3.14916L0 3.07389Z" fill="#D9D9D9"/>
+                    </g>
+                    <g transform="translate(0, 4)">
+                      <path d="M27.6399 0H2.10781C0.943697 0 0 0.943698 0 2.10781V21.0655C0 22.2296 0.943697 23.1733 2.10781 23.1733H27.6399C28.804 23.1733 29.7477 22.2296 29.7477 21.0655V2.10781C29.7477 0.943698 28.804 0 27.6399 0Z" fill="#D9D9D9"/>
+                      <g transform="translate(7.5, 4)">
+                        <path d="M7.38986 13.5251C10.7783 13.5251 13.5251 10.7783 13.5251 7.38986C13.5251 4.00147 10.7783 1.25464 7.38986 1.25464C4.00147 1.25464 1.25464 4.00147 1.25464 7.38986C1.25464 10.7783 4.00147 13.5251 7.38986 13.5251Z" stroke="white" strokeWidth="2.50929" strokeMiterlimit="10"/>
+                      </g>
+                    </g>
+                  </svg>
+                </>
+            }
           </div>
         </div>
 
@@ -100,33 +107,12 @@ export default function SignupProfile() {
             <p className="text-[15px] font-semibold leading-[136%] tracking-[-0.01em] text-gray-900 mb-1 font-sans">
               학교
             </p>
-            <div className="relative">
-              <button
-                onClick={() => setSchoolOpen((prev) => !prev)}
-                className="w-[318px] h-[55px] rounded-[20px] bg-gray-50 px-4 flex items-center justify-between cursor-pointer"
-              >
-                <span className={`text-[15px] font-medium font-sans ${school ? 'text-gray-900' : 'text-transparent'}`}>
-                  {school || '　'}
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="9" viewBox="0 0 14 9" fill="none">
-                  <path d="M1 1L7 8" stroke="black" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M13 1L7 8" stroke="black" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </button>
-              {schoolOpen && (
-                <div className="absolute top-[60px] left-0 w-[318px] bg-white rounded-[20px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] z-10 overflow-hidden">
-                  {['이화여자대학교', '연세대학교', '고려대학교', '서강대학교', '성균관대학교'].map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => { setSchool(s); setSchoolOpen(false) }}
-                      className="w-full px-4 py-3 text-left text-[15px] text-gray-900 hover:bg-gray-50 cursor-pointer font-sans"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <input
+              placeholder="학교명을 입력해주세요"
+              value={school}
+              onChange={(e) => setSchool(e.target.value)}
+              className="w-[318px] h-[55px] rounded-[20px] bg-gray-50 px-4 text-[15px] font-medium leading-[136%] tracking-[-0.01em] text-gray-900 placeholder:text-black/30 outline-none font-sans"
+            />
           </div>
 
           {/* 생년월일 */}
@@ -134,33 +120,12 @@ export default function SignupProfile() {
             <p className="text-[15px] font-semibold leading-[136%] tracking-[-0.01em] text-gray-900 mb-1 font-sans">
               생년월일
             </p>
-            <div className="relative">
-              <button
-                onClick={() => setBirthOpen((prev) => !prev)}
-                className="w-[318px] h-[55px] rounded-[20px] bg-gray-50 px-4 flex items-center justify-between cursor-pointer"
-              >
-                <span className={`text-[15px] font-medium font-sans ${birth ? 'text-gray-900' : 'text-transparent'}`}>
-                  {birth || '　'}
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="9" viewBox="0 0 14 9" fill="none">
-                  <path d="M1 1L7 8" stroke="black" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M13 1L7 8" stroke="black" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </button>
-              {birthOpen && (
-                <div className="absolute top-[60px] left-0 w-[318px] bg-white rounded-[20px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] z-10 overflow-hidden">
-                  {BIRTH_OPTIONS.map((b, index) => (
-                    <button
-                      key={`${b}-${index}`}
-                      onClick={() => { setBirth(b); setBirthOpen(false) }}
-                      className="w-full px-4 py-3 text-left text-[15px] text-gray-900 hover:bg-gray-50 cursor-pointer font-sans"
-                    >
-                      {b}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <input
+              type="date"
+              value={birth}
+              onChange={(e) => setBirth(e.target.value)}
+              className="w-[318px] h-[55px] rounded-[20px] bg-gray-50 px-4 text-[15px] font-medium leading-[136%] tracking-[-0.01em] text-gray-900 outline-none font-sans"
+            />
           </div>
 
           {/* 성별 */}

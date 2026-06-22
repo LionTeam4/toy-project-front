@@ -2,11 +2,6 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { signup } from '../apis/auth'
 
-const SCHOOLS = {
-  'ㄱ': ['가야대학교', '가야대학교'],
-  'ㄴ': ['나야대학교', '나야대학교', '나야대학교', '나야대학교', '나야대학교'],
-}
-
 export default function SignupFestival() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -14,63 +9,36 @@ export default function SignupFestival() {
   const {
     username,
     password,
-    nickname, 
+    nickname,
     myschool,
     birth,
     profile,
   } = location.state || {}
 
-  const [selectedSchools, setSelectedSchools] = useState([])
-
-  const toggleSchool = (key) => {
-    setSelectedSchools((prev) =>
-      prev.includes(key) ? prev.filter((s) => s !== key) : [...prev, key]
-    )
-  }
+  const [likeschool, setLikeschool] = useState('')
 
   const handleSubmit = async () => {
-
     try {
-
       const response = await signup({
-
         username,
-
         password,
-
         nickname,
-
         profile,
-
         myschool,
-
         birth,
-
         likearea: "서울",
-
-        likeschool:
-          selectedSchools.length > 0
-            ? selectedSchools[0]
-            : "",
-
+        likeschool,
       })
 
       console.log("회원가입 성공")
-
       console.log(response.data)
-
       navigate('/login')
 
     } catch(error) {
-
       console.error("회원가입 실패")
-
       console.log(error.response)
-
       console.log(error.response.data)
-
     }
-
   }
 
   return (
@@ -84,45 +52,17 @@ export default function SignupFestival() {
           </h2>
         </div>
 
-        {/* 학교 검색창 */}
-        <div className="relative flex items-center border-b-2 border-primary pb-2 mb-6">
+        {/* 관심 학교 입력 */}
+        <div>
+          <p className="text-[15px] font-semibold leading-[136%] tracking-[-0.01em] text-gray-900 mb-1 font-sans">
+            관심 학교
+          </p>
           <input
-            placeholder="학교명을 검색하세요"
-            className="flex-1 text-[15px] font-medium leading-[136%] tracking-[-0.01em] placeholder:text-black/60 outline-none bg-transparent font-sans"
+            placeholder="관심있는 학교명을 입력해주세요"
+            value={likeschool}
+            onChange={(e) => setLikeschool(e.target.value)}
+            className="w-[318px] h-[55px] rounded-[20px] bg-gray-50 px-4 text-[15px] font-medium leading-[136%] tracking-[-0.01em] text-gray-900 placeholder:text-black/30 outline-none font-sans"
           />
-          <button className="cursor-pointer flex-shrink-0">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <circle cx="9" cy="9" r="7" stroke="#000000" strokeWidth="2"/>
-              <line x1="14" y1="14" x2="19" y2="19" stroke="#000000" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* 학교 목록 */}
-        <div className="flex flex-col gap-4">
-          {Object.entries(SCHOOLS).map(([consonant, schools]) => (
-            <div key={consonant}>
-              <p className="text-xs text-gray-400 mb-2 font-sans">{consonant}</p>
-              <div className="flex flex-wrap gap-2">
-                {schools.map((school, i) => {
-                  const key = `${consonant}-${i}`
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => toggleSchool(school)}
-                      className={`w-[96px] h-[43px] rounded-[18px] text-sm cursor-pointer font-sans ${
-                        selectedSchools.includes(school)
-                          ? 'border-2 border-primary text-gray-900 bg-primary/10'
-                          : 'bg-gray-50 text-gray-600'
-                      }`}
-                    >
-                      {school}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
         </div>
 
         {/* 다음 버튼 — 하단 고정 */}
