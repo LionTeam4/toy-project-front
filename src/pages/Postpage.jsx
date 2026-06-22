@@ -188,8 +188,7 @@ export function PostNewPage() {
 
   const [type, setType]             = useState(pathname.includes('reviews') ? '후기' : '소통')
   const [title, setTitle]           = useState('')
-  const [school, setSchool]         = useState('이화여자대학교')
-  const schools = ['이화여자대학교', '연세대학교', '고려대학교', '서강대학교']
+  const [school, setSchool]         = useState('')
   const [content, setContent]       = useState('')
   const [previewUrl, setPreviewUrl] = useState(null)
   const [error, setError]           = useState('')
@@ -217,7 +216,7 @@ export function PostNewPage() {
 
   const today = new Date().toLocaleDateString('ko-KR', {
     year: 'numeric', month: '2-digit', day: '2-digit'
-  }).replace(/\. /g, '.').replace('.', '')
+  }).replace(/\. /g, '.')
 
   return (
     <div className="bg-white min-h-screen pb-24">
@@ -227,14 +226,22 @@ export function PostNewPage() {
             <path d="M6 1L1 6L6 11" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          className="text-[13px] font-medium text-gray-900 outline-none cursor-pointer bg-white rounded-[18px] px-3 leading-[136%] tracking-[-0.01em] block w-[58px] h-[29px] border border-gray-900 font-sans"
-        >
-          <option value="소통">소통</option>
-          <option value="후기">후기</option>
-        </select>
+        <div className="relative w-[58px] h-[29px]">
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className="text-[13px] font-medium text-gray-900 outline-none cursor-pointer bg-white rounded-[18px] pl-2.5 pr-4 leading-[136%] tracking-[-0.01em] block w-full h-full border border-gray-900 font-sans appearance-none"
+          >
+            <option value="소통">소통</option>
+            <option value="후기">후기</option>
+          </select>
+          <div className="absolute right-[10px] top-1/2 -translate-y-1/2 pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none">
+              <path d="M0.5 0.5L5 5.5" stroke="black" strokeLinecap="round"/>
+              <path d="M9.5 0.5L5 5.5" stroke="black" strokeLinecap="round"/>
+            </svg>
+          </div>
+        </div>
       </div>
 
       <div className="px-[34px] flex flex-col gap-4">
@@ -242,7 +249,7 @@ export function PostNewPage() {
           placeholder="제목 작성하기"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="text-[21.2px] font-bold text-gray-900 outline-none placeholder:text-gray-900 w-full font-sans"
+          className="text-[21.2px] font-bold text-gray-900 outline-none placeholder:text-gray-900 focus:placeholder:text-transparent w-full font-sans"
         />
         <p className="text-[13px] font-normal text-black/50 -mt-2 font-sans">{today}</p>
         <div className="border-t border-gray-100" />
@@ -251,18 +258,18 @@ export function PostNewPage() {
             placeholder="ㅣ 클릭해서 작성하기"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="flex-1 text-[12px] font-normal leading-[136%] tracking-[-0.01em] text-gray-900 outline-none placeholder:text-gray-900 resize-none min-h-[200px] w-full font-sans"
+            className="flex-1 text-[12px] font-normal leading-[136%] tracking-[-0.01em] text-gray-900 outline-none placeholder:text-gray-900 focus:placeholder:text-transparent resize-none min-h-[200px] w-full font-sans"
           />
         </div>
+        {/* 학교 선택 */}
         <div>
           <p className="text-[14px] font-bold leading-[136%] tracking-[-0.01em] text-gray-900 mb-2 font-sans">학교 선택</p>
-          <select
+          <input
+            placeholder="학교명을 입력해주세요"
             value={school}
             onChange={(e) => setSchool(e.target.value)}
-            className="w-full h-[45px] border border-gray-300 rounded-[12px] px-4 text-sm outline-none font-sans"
-          >
-            {schools.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+            className="w-full h-[45px] rounded-[12px] bg-gray-50 px-4 text-sm font-medium leading-[136%] tracking-[-0.01em] text-gray-900 placeholder:text-black/30 outline-none font-sans"
+          />
         </div>
         {type === '소통' && (
           <div>
